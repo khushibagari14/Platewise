@@ -39,11 +39,21 @@ function checkRateLimit(request: Request): boolean {
   return true;
 }
 
+function parseModelJson(text: string): unknown {
+  const cleaned = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  try { return JSON.parse(cleaned); } catch {
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start < 0 || end <= start) return null;
+    try { return JSON.parse(cleaned.slice(start, end + 1)); } catch { return null; }
+  }
+}
+
 export async function POST(request: Request) {
   try {
     if (!checkRateLimit(request)) return Response.json({ error: 'Too many scans at once. Please wait a minute and try again.' }, { status: 429 });
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return Response.json({ error: 'Gemini is not connected yet. Add your API key to the local environment, then try again.' }, { status: 503 });
+    if (!apiKey) return Response.json({ error: 'Meal analysis is not available right now. Please try again later.' }, { status: 503 });
     const form = await request.formData();
     const images = form.getAll('images').filter((entry): entry is File => entry instanceof File);
     if (!images.length || images.length > MAX_IMAGES) return Response.json({ error: `Please add between 1 and ${MAX_IMAGES} meal photos.` }, { status: 400 });
@@ -56,13 +66,7 @@ export async function POST(request: Request) {
       for (let index = 0; index < bytes.length; index += 0x8000) binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
       return { inline_data: { mime_type: image.type, data: btoa(binary) } };
     }));
-    const model = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 35_000);
-    const geminiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent', {
-      method: 'POST', signal: controller.signal,
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify({
+    const requestBody = JSON.stringify({
         contents: [{ role: 'user', parts: [
           { text: `Analyze these ${images.length} photo(s) as different views of one meal. Identify visible foods and estimate the pictured portions. Do not count an item twice when it appears in multiple photos. Return JSON only. If this is not food, return an empty items array. Do not give medical advice. Nutrient values must be per listed portion and use grams except calories.` },
           ...imageParts,
@@ -81,19 +85,40 @@ export async function POST(request: Request) {
               } } },
             },
           },
+          maxOutputTokens: 2048,
           temperature: .2,
         },
-      }),
-    });
-    clearTimeout(timeout);
+      });
+    const configuredModel = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+    const models = [...new Set([configuredModel, 'gemini-3.5-flash', 'gemini-flash-latest'])];
+    let geminiResponse: Response | null = null;
+    for (const model of models) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 60_000);
+      try {
+        geminiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent', {
+          method: 'POST',
+          signal: controller.signal,
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+          body: requestBody,
+        });
+      } catch (error) {
+        if (model !== models.at(-1)) continue;
+        throw error;
+      } finally {
+        clearTimeout(timeout);
+      }
+      if (geminiResponse.ok || [401, 403].includes(geminiResponse.status)) break;
+    }
+    if (!geminiResponse) return Response.json({ error: 'Meal analysis is not available right now. Please try again.' }, { status: 503 });
     if (!geminiResponse.ok) {
       const status = geminiResponse.status === 429 ? 429 : 502;
-      return Response.json({ error: status === 429 ? 'Gemini is busy right now. Please wait a moment and retry.' : 'Gemini could not read this photo. Please try again.' }, { status });
+      return Response.json({ error: status === 429 ? 'Meal analysis is busy right now. Please wait a moment and retry.' : 'We could not read these photos. Please try again.' }, { status });
     }
     const payload = await geminiResponse.json() as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
     const text = payload.candidates?.[0]?.content?.parts?.find((part) => part.text)?.text;
     if (!text) return Response.json({ error: 'We could not find food in that photo. Try a clearer picture of the whole meal.' }, { status: 422 });
-    const parsed = validateAnalysis(JSON.parse(text));
+    const parsed = validateAnalysis(parseModelJson(text));
     if (!parsed?.items.length) return Response.json({ error: 'We could not find food in that photo. Try a clearer picture of the whole meal.' }, { status: 422 });
     return Response.json(parsed);
   } catch (error) {
