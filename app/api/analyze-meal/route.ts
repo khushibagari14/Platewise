@@ -1,6 +1,7 @@
 import { MealAnalysis, MealItem } from '@/lib/nutrition';
 
 const MAX_BYTES = 8 * 1024 * 1024;
+const MAX_IMAGES = 4;
 const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const requests = new Map<string, number[]>();
 
@@ -44,15 +45,17 @@ export async function POST(request: Request) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return Response.json({ error: 'Gemini is not connected yet. Add your API key to the local environment, then try again.' }, { status: 503 });
     const form = await request.formData();
-    const image = form.get('image');
-    if (!(image instanceof File)) return Response.json({ error: 'Please add a meal photo.' }, { status: 400 });
-    if (!ALLOWED.has(image.type)) return Response.json({ error: 'Please use a JPEG, PNG or WebP photo.' }, { status: 415 });
-    if (image.size > MAX_BYTES) return Response.json({ error: 'That photo is too large. Please try one under 8 MB.' }, { status: 413 });
+    const images = form.getAll('images').filter((entry): entry is File => entry instanceof File);
+    if (!images.length || images.length > MAX_IMAGES) return Response.json({ error: `Please add between 1 and ${MAX_IMAGES} meal photos.` }, { status: 400 });
+    if (images.some((image) => !ALLOWED.has(image.type))) return Response.json({ error: 'Please use JPEG, PNG or WebP photos.' }, { status: 415 });
+    if (images.some((image) => image.size > MAX_BYTES)) return Response.json({ error: 'Each photo must be under 8 MB.' }, { status: 413 });
 
-    const bytes = new Uint8Array(await image.arrayBuffer());
-    let binary = '';
-    for (let index = 0; index < bytes.length; index += 0x8000) binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
-    const imageData = btoa(binary);
+    const imageParts = await Promise.all(images.map(async (image) => {
+      const bytes = new Uint8Array(await image.arrayBuffer());
+      let binary = '';
+      for (let index = 0; index < bytes.length; index += 0x8000) binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
+      return { inline_data: { mime_type: image.type, data: btoa(binary) } };
+    }));
     const model = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 35_000);
@@ -61,8 +64,8 @@ export async function POST(request: Request) {
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [
-          { text: 'Analyze this meal photo for an everyday nutrition estimate. Identify visible foods and estimate the pictured portions. Return JSON only. If this is not food, return an empty items array. Do not give medical advice. Nutrient values must be per listed portion and use grams except calories.' },
-          { inline_data: { mime_type: image.type, data: imageData } },
+          { text: `Analyze these ${images.length} photo(s) as different views of one meal. Identify visible foods and estimate the pictured portions. Do not count an item twice when it appears in multiple photos. Return JSON only. If this is not food, return an empty items array. Do not give medical advice. Nutrient values must be per listed portion and use grams except calories.` },
+          ...imageParts,
         ] }],
         generationConfig: {
           responseMimeType: 'application/json',

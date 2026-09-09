@@ -58,12 +58,25 @@ h1 { font-size: clamp(3rem, 10vw, 5.4rem); line-height: .97; margin: 0; }
 .disclaimer { max-width: 630px; margin: 20px auto 0; text-align: center; color: var(--ink-muted); font-size: .78rem; line-height: 1.5; }
 .scanner-active { padding: 18px; }
 .review-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr); gap: 30px; min-height: 480px; }
+.photo-review { min-width: 0; }
+.photo-review-grid { height: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(128px, 1fr); gap: 10px; }
 .review-photo { border-radius: 20px; overflow: hidden; min-height: 450px; position: relative; background: var(--olive-soft); }
+.photo-review-grid .review-photo { min-height: 128px; border-radius: 17px; }
+.photo-review-grid .review-photo-main { grid-column: 1 / -1; min-height: 290px; }
 .review-photo img { width: 100%; height: 100%; position: absolute; object-fit: cover; }
 .remove-photo { position: absolute; right: 12px; top: 12px; z-index: 1; width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.55); border-radius: 50%; color: white; background: rgba(26,40,30,.6); backdrop-filter: blur(8px); cursor: pointer; }
+.photo-number { position: absolute; left: 12px; bottom: 12px; z-index: 1; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: white; background: rgba(26,40,30,.68); font-size: .78rem; font-weight: 800; backdrop-filter: blur(8px); }
+.add-photo-tile { min-height: 128px; padding: 18px; border: 1px dashed #9aa997; border-radius: 17px; color: var(--olive); background: #edf0e7; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; cursor: pointer; }
+.add-photo-tile span { width: 42px; height: 42px; display: grid; place-items: center; margin-bottom: 3px; border-radius: 50%; color: white; background: var(--olive); }
+.add-photo-tile strong { font-size: .88rem; }
+.add-photo-tile small { color: var(--ink-muted); font-size: .75rem; }
+.add-photo-tile:hover { border-color: var(--olive); background: #e5eadc; }
 .review-copy { padding: 46px 25px 30px 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
 .review-copy h2 { margin: 0; font-size: clamp(2.1rem, 4vw, 3.15rem); line-height: 1.04; }
 .review-copy p { color: var(--ink-muted); line-height: 1.6; margin: 20px 0 27px; }
+.add-more-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: -8px 0 14px; }
+.add-more-actions button { min-height: 48px; padding: 0 12px; border: 1px solid var(--line); border-radius: 12px; color: var(--olive); background: #faf7ef; display: flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; font-size: .82rem; font-weight: 750; }
+.add-more-actions button:hover { border-color: #8d9b8a; background: var(--olive-soft); }
 .analyze-button { width: 100%; min-height: 58px; padding: 0 18px; border: 0; border-radius: 15px; color: white; background: var(--olive); display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 750; cursor: pointer; }
 .analyze-button svg:last-child { margin-left: auto; }
 .analyze-button:disabled { opacity: .84; cursor: wait; }
@@ -102,7 +115,14 @@ h1 { font-size: clamp(3rem, 10vw, 5.4rem); line-height: .97; margin: 0; }
 .section-heading { display: flex; justify-content: space-between; align-items: end; border-bottom: 1px solid var(--line); padding-bottom: 14px; }
 .section-heading h3 { font-family: Georgia, "Times New Roman", serif; font-size: 1.6rem; margin: 0; }
 .section-heading small { color: var(--ink-muted); }
-.food-item { display: grid; grid-template-columns: 1fr auto auto; gap: 18px; align-items: center; border-bottom: 1px solid var(--line); padding: 17px 0; }
+.food-swipe { position: relative; overflow: hidden; background: #b63d2c; border-bottom: 1px solid var(--line); }
+.food-item { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr auto auto auto; gap: 18px; align-items: center; padding: 17px 0; background: var(--paper); transition: transform .28s cubic-bezier(.22,1,.36,1); touch-action: pan-y; }
+.food-swipe.is-open .food-item { transform: translateX(-92px); }
+.delete-food { position: absolute; inset: 0 0 0 auto; width: 92px; border: 0; color: white; background: #b63d2c; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; cursor: pointer; font-size: .73rem; font-weight: 750; }
+.desktop-delete-food { width: 38px; height: 38px; border: 0; border-radius: 50%; color: #9c493c; background: transparent; display: grid; place-items: center; cursor: pointer; opacity: .6; transition: opacity .2s, background .2s, transform .2s; }
+.desktop-delete-food:hover { opacity: 1; background: #f2ddd7; transform: scale(1.04); }
+.empty-foods { padding: 28px 18px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 5px; text-align: center; color: var(--ink-muted); }
+.empty-foods strong { color: var(--olive); }
 .food-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .food-main input { width: 100%; border: 0; padding: 2px 4px; border-radius: 5px; background: transparent; color: var(--olive); font-weight: 750; font-size: 1rem; }
 .food-main input:focus { background: var(--olive-soft); outline: 2px solid transparent; }
@@ -148,8 +168,12 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(184,70,50,.4
   .scanner-active { padding: 10px; }
   .review-layout { grid-template-columns: 1fr; gap: 0; }
   .review-photo { min-height: 310px; }
+  .photo-review-grid { grid-auto-rows: 112px; }
+  .photo-review-grid .review-photo-main { min-height: 285px; }
+  .add-photo-tile { min-height: 112px; }
   .review-copy { padding: 25px 10px 13px; }
   .review-copy h2 { font-size: 2.15rem; }
+  .add-more-actions { grid-template-columns: 1fr; }
   .result-top { grid-template-columns: 68px 1fr; gap: 13px; }
   .result-photo { width: 68px; height: 68px; border-radius: 14px; }
   .result-top h2 { font-size: 1.45rem; }
@@ -163,6 +187,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(184,70,50,.4
   .section-heading small { display: none; }
   .food-item { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
   .food-nutrition { display: none; }
+  .desktop-delete-food { display: none; }
   .quantity-control button { width: 32px; }
   .history-drawer { padding: 22px 18px; }
 }
