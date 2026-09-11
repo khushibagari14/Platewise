@@ -1,5 +1,13 @@
 'use client';
 import {
+  Show,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+  useAuth,
+  useClerk,
+} from '@clerk/nextjs';
+import {
   AlertCircle,
   CalendarDays,
   Camera,
@@ -17,7 +25,14 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ChangeEvent,
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import Image from 'next/image';
 import { MealAnalysis, MealItem, SavedMeal, totalMeal } from '@/lib/nutrition';
 
@@ -77,9 +92,12 @@ async function compressImage(
 }
 
 export default function Home() {
+  const { isLoaded, isSignedIn } = useAuth();
+  const { openSignUp } = useClerk();
   const cameraRef = useRef<HTMLInputElement>(null);
   const libraryRef = useRef<HTMLInputElement>(null);
   const swipeStartX = useRef<number | null>(null);
+  const pendingSignupAnalysis = useRef(false);
   const [photos, setPhotos] = useState<
     { id: string; blob: Blob; preview: string }[]
   >([]);
@@ -206,6 +224,10 @@ export default function Home() {
       if (!preview) setPreview(additions[0].preview);
       setAnalysis(null);
       setStatus('ready');
+      if (!isSignedIn) {
+        pendingSignupAnalysis.current = true;
+        if (isLoaded) openSignUp();
+      }
       if (files.length > available.length)
         setError(
           `We added the first ${available.length}. A meal can have up to ${MAX_PHOTOS} photos.`,
@@ -217,6 +239,11 @@ export default function Home() {
 
   async function analyzeMeal() {
     if (!photos.length) return;
+    if (!isSignedIn) {
+      pendingSignupAnalysis.current = true;
+      if (isLoaded) openSignUp();
+      return;
+    }
     if (!navigator.onLine)
       return setError('You’re offline. Reconnect to analyze this meal.');
     setStatus('loading');
@@ -258,6 +285,27 @@ export default function Home() {
       setStatus('ready');
     }
   }
+
+  const resumePendingAnalysis = useEffectEvent(analyzeMeal);
+  useEffect(() => {
+    if (
+      !isLoaded ||
+      !pendingSignupAnalysis.current ||
+      !photos.length ||
+      status !== 'ready'
+    )
+      return;
+    if (!isSignedIn) {
+      openSignUp();
+      return;
+    }
+    pendingSignupAnalysis.current = false;
+    const resumeTimer = window.setTimeout(
+      () => void resumePendingAnalysis(),
+      0,
+    );
+    return () => window.clearTimeout(resumeTimer);
+  }, [isLoaded, isSignedIn, openSignUp, photos.length, status]);
 
   function updateItem(id: string, itemPatch: Partial<MealItem>) {
     setAnalysis((current) => {
@@ -375,16 +423,32 @@ export default function Home() {
           </span>
           <span>platewise</span>
         </button>
-        <button
-          className="history-button"
-          type="button"
-          onClick={openHistory}
-          aria-label="View recent meals"
-        >
-          <History size={18} />
-          <span>Recent meals</span>
-          {hasUnseenHistory && <b aria-hidden="true" />}
-        </button>
+        <div className="header-actions">
+          <Show when="signed-out">
+            <SignInButton mode="modal">
+              <button className="sign-in-button">Sign in</button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <button className="sign-up-button">Sign up</button>
+            </SignUpButton>
+          </Show>
+          <Show when="signed-in">
+            <UserButton
+              userProfileMode="navigation"
+              userProfileUrl="/profile"
+            />
+          </Show>
+          <button
+            className="history-button"
+            type="button"
+            onClick={openHistory}
+            aria-label="View recent meals"
+          >
+            <History size={18} />
+            <span>Recent meals</span>
+            {hasUnseenHistory && <b aria-hidden="true" />}
+          </button>
+        </div>
       </header>
       <div id="top" className="page-shell">
         {status === 'idle' && (
@@ -983,6 +1047,19 @@ export default function Home() {
                         </div>
                       );
                     })}
+                  </div>
+                  <div
+                    className="daily-protein-footer"
+                    aria-label={`${Math.round(selectedTotals.protein)} grams total protein intake`}
+                  >
+                    <span>
+                      <small>Daily total</small>
+                      <strong>Total protein intake</strong>
+                    </span>
+                    <b>
+                      {Math.round(selectedTotals.protein)}
+                      <small>g</small>
+                    </b>
                   </div>
                 </>
               ) : (
