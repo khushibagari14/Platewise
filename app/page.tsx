@@ -35,6 +35,7 @@ import {
 } from 'react';
 import Image from 'next/image';
 import { MealAnalysis, MealItem, SavedMeal, totalMeal } from '@/lib/nutrition';
+import { DailyNutritionCalculator } from './daily-nutrition-calculator';
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const MAX_PHOTOS = 4;
@@ -971,6 +972,10 @@ export default function Home() {
                   {selectedMeals.length === 1 ? '' : 's'}
                 </span>
               </div>
+              <DailyNutritionCalculator
+                consumed={selectedTotals}
+                selectedDate={selectedDate}
+              />
               {selectedMeals.length > 0 ? (
                 <>
                   <div className="day-total">
@@ -1047,19 +1052,6 @@ export default function Home() {
                         </div>
                       );
                     })}
-                  </div>
-                  <div
-                    className="daily-protein-footer"
-                    aria-label={`${Math.round(selectedTotals.protein)} grams total protein intake`}
-                  >
-                    <span>
-                      <small>Daily total</small>
-                      <strong>Total protein intake</strong>
-                    </span>
-                    <b>
-                      {Math.round(selectedTotals.protein)}
-                      <small>g</small>
-                    </b>
                   </div>
                 </>
               ) : (

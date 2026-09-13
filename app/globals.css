@@ -1081,6 +1081,229 @@ h1 {
   color: var(--ink-muted);
   font-size: 0.78rem;
 }
+.nutrition-goal-card {
+  position: relative;
+  margin: 18px 0 20px;
+  padding: 20px;
+  border: 1px solid rgba(31, 52, 37, 0.12);
+  border-radius: 22px;
+  background: linear-gradient(145deg, #fffdf7 0%, #f2ecdc 100%);
+}
+.nutrition-goal-heading {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+.nutrition-goal-heading h3 {
+  margin: 4px 0 0;
+  color: var(--olive);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.3rem;
+  line-height: 1.05;
+}
+.nutrition-goal-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: var(--tomato);
+  background: var(--tomato-soft);
+  display: grid;
+  place-items: center;
+}
+.nutrition-edit {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--olive);
+  background: rgba(255, 255, 255, 0.7);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.nutrition-edit svg {
+  transition: transform 180ms ease;
+}
+.nutrition-edit svg.open {
+  transform: rotate(180deg);
+}
+.nutrition-profile-form {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.nutrition-profile-form label {
+  min-width: 0;
+}
+.nutrition-profile-form label > span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--olive);
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+.nutrition-profile-form input,
+.nutrition-profile-form select {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--ink);
+  background: var(--paper);
+  font: inherit;
+}
+.field-with-unit {
+  position: relative;
+}
+.field-with-unit input {
+  padding-right: 52px;
+}
+.field-with-unit small {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  color: var(--ink-muted);
+  transform: translateY(-50%);
+}
+.nutrition-estimate-note {
+  grid-column: 1/-1;
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+.save-nutrition-goal {
+  grid-column: 1/-1;
+  min-height: 48px;
+  border: 0;
+  border-radius: 13px;
+  color: white;
+  background: var(--olive);
+  font-weight: 800;
+  cursor: pointer;
+}
+.remaining-protein {
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 18px;
+  color: white;
+  background: var(--olive);
+}
+.remaining-protein > div:first-child {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.remaining-protein small {
+  color: rgba(255, 255, 255, 0.72);
+}
+.remaining-protein strong {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2.65rem;
+  line-height: 0.9;
+}
+.remaining-protein strong span {
+  margin-left: 3px;
+  font-family: inherit;
+  font-size: 1.05rem;
+}
+.protein-progress-copy {
+  margin: 15px 0 7px;
+  display: flex;
+  justify-content: space-between;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.75rem;
+}
+.protein-progress {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+}
+.protein-progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #f0cbb7;
+  transition: width 280ms ease;
+}
+.remaining-protein.complete .protein-progress i {
+  background: #c9dcae;
+}
+.daily-target-grid {
+  margin: 10px 0 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.daily-target-grid div {
+  padding: 12px;
+  border: 1px solid rgba(31, 52, 37, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+}
+.daily-target-grid dt {
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+}
+.daily-target-grid dd {
+  margin: 3px 0 0;
+  color: var(--olive);
+  font-weight: 850;
+}
+.daily-target-grid dd small {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.protein-complete-toast {
+  position: fixed;
+  z-index: 40;
+  right: 22px;
+  top: 22px;
+  width: min(360px, calc(100vw - 32px));
+  padding: 14px;
+  border-radius: 18px;
+  color: white;
+  background: var(--olive);
+  box-shadow: 0 18px 50px rgba(17, 35, 23, 0.28);
+  display: grid;
+  grid-template-columns: 24px 1fr 32px;
+  align-items: center;
+  gap: 10px;
+  animation: toast-in 240ms ease-out both;
+}
+.protein-complete-toast strong,
+.protein-complete-toast small {
+  display: block;
+}
+.protein-complete-toast small {
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.76rem;
+}
+.protein-complete-toast button {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  color: white;
+  background: rgba(255, 255, 255, 0.12);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+}
 .day-total {
   display: grid;
   grid-template-columns: 1fr 1.5fr;
@@ -1336,75 +1559,162 @@ input:focus-visible {
 .profile-card .cl-navbar {
   border-right-color: var(--line);
 }
-.billing-card {
-  margin-bottom: 22px;
-  padding: 24px;
-  border-radius: 24px;
-  color: white;
-  background: var(--olive);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 24px;
-  box-shadow: 0 18px 40px rgba(31, 52, 37, 0.13);
+.premium-panel {
+  margin-bottom: 26px;
+  padding: 28px;
+  border: 1px solid rgba(31, 52, 37, 0.12);
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 92% 6%, rgba(197, 80, 56, 0.14), transparent 34%),
+    linear-gradient(145deg, #fffdf7 0%, #f4efe2 100%);
+  box-shadow: 0 24px 58px rgba(31, 52, 37, 0.11);
+}
+.premium-panel.is-active {
+  background: linear-gradient(145deg, #fffdf7, #e8efdf);
 }
 .billing-kicker {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: #f3cbbf;
+  color: var(--tomato);
   font-size: 0.72rem;
   font-weight: 850;
   letter-spacing: 0.09em;
 }
-.billing-card h2 {
-  margin: 8px 0 7px;
+.premium-hero h2 {
+  max-width: 570px;
+  margin: 9px 0 10px;
+  color: var(--olive);
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 1.75rem;
-  line-height: 1.08;
+  font-size: clamp(2rem, 6vw, 3.35rem);
+  line-height: 0.98;
 }
-.billing-card-copy > p {
-  max-width: 500px;
+.premium-hero > p {
+  max-width: 590px;
   margin: 0;
-  color: rgba(255, 255, 255, 0.76);
+  color: var(--ink-muted);
   line-height: 1.55;
 }
-.billing-card ul {
-  margin: 16px 0 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 18px;
+.premium-benefits {
+  margin: 26px 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
 }
-.billing-card li {
+.premium-benefits article {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid rgba(31, 52, 37, 0.1);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.7);
+}
+.premium-benefit-icon {
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.84rem;
+  justify-content: center;
+  border-radius: 13px;
+  color: var(--tomato);
+  background: var(--tomato-soft);
 }
-.billing-card-action {
-  min-width: 180px;
+.premium-benefits h3,
+.premium-journey h3,
+.premium-plan-card h3 {
+  margin: 13px 0 5px;
+  color: var(--olive);
+  font-size: 1rem;
+}
+.premium-benefits p,
+.premium-journey p,
+.premium-plan-card p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+.premium-journey {
+  margin-bottom: 18px;
+  padding: 20px;
+  border-radius: 22px;
+  background: var(--paper);
+}
+.premium-journey-title > span,
+.premium-plan-copy > span {
+  color: var(--tomato);
+  font-size: 0.69rem;
+  font-weight: 850;
+  letter-spacing: 0.09em;
+}
+.premium-journey-title h3 {
+  margin-top: 5px;
+}
+.premium-journey ol {
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 14px;
+}
+.premium-journey li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.journey-marker {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: white;
+  background: var(--olive);
+  font-weight: 800;
+  font-size: 0.78rem;
+}
+.premium-journey strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--olive);
+}
+.premium-plan-card {
+  padding: 22px;
+  border-radius: 22px;
+  color: white;
+  background: var(--olive);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 22px;
+}
+.premium-plan-copy > span {
+  color: #f3cbbf;
+}
+.premium-plan-card h3 {
+  margin-top: 5px;
+  color: white;
+  font-size: 1.2rem;
+}
+.premium-plan-card p {
+  color: rgba(255, 255, 255, 0.7);
+}
+.premium-plan-price {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: flex-end;
-  gap: 11px;
 }
-.plan-price {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-}
-.plan-price strong {
+.premium-plan-price strong {
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 2.35rem;
-  line-height: 1;
+  font-size: 2.65rem;
+  line-height: 0.95;
 }
-.plan-price span {
+.premium-plan-price span {
+  margin-top: 5px;
   color: rgba(255, 255, 255, 0.68);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
 }
-.billing-card-action button,
+.premium-plan-card button,
 .checkout-result-card a {
   min-height: 48px;
   padding: 0 18px;
@@ -1420,24 +1730,26 @@ input:focus-visible {
   cursor: pointer;
   text-decoration: none;
 }
-.billing-card-action button:disabled {
+.premium-plan-card button:disabled {
   opacity: 0.65;
   cursor: wait;
 }
-.plan-status {
+.premium-active-pill {
   padding: 10px 14px;
   border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-weight: 800;
 }
 .billing-status,
 .billing-error {
-  grid-column: 1 / -1;
-  margin: -7px 0 0;
+  margin: 12px 0 0;
   font-size: 0.8rem;
 }
 .billing-status {
-  color: rgba(255, 255, 255, 0.68);
+  color: var(--ink-muted);
   text-transform: capitalize;
 }
 .billing-error {
@@ -1687,6 +1999,36 @@ input:focus-visible {
     padding: 7px 5px;
     text-align: center;
   }
+  .nutrition-goal-card {
+    padding: 16px 14px;
+  }
+  .nutrition-goal-heading {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+  .nutrition-goal-icon {
+    width: 40px;
+    height: 40px;
+  }
+  .nutrition-edit {
+    grid-column: 1/-1;
+    width: 100%;
+    justify-content: center;
+  }
+  .nutrition-profile-form {
+    grid-template-columns: 1fr;
+  }
+  .nutrition-profile-form .wide,
+  .nutrition-estimate-note,
+  .save-nutrition-goal {
+    grid-column: 1;
+  }
+  .daily-target-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .protein-complete-toast {
+    right: 16px;
+    top: 16px;
+  }
   .profile-page {
     padding: 22px 12px 40px;
   }
@@ -1702,17 +2044,32 @@ input:focus-visible {
   .profile-card .cl-cardBox {
     border-radius: 22px;
   }
-  .billing-card {
-    padding: 21px 18px;
+  .premium-panel {
+    padding: 22px 16px;
+    border-radius: 24px;
+  }
+  .premium-benefits {
     grid-template-columns: 1fr;
-    gap: 20px;
   }
-  .billing-card-action {
-    min-width: 0;
-    align-items: stretch;
+  .premium-benefits article {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    column-gap: 12px;
   }
-  .plan-price {
-    justify-content: flex-start;
+  .premium-benefits h3 {
+    margin: 2px 0 3px;
+  }
+  .premium-benefits p {
+    grid-column: 2;
+  }
+  .premium-plan-card {
+    grid-template-columns: 1fr auto;
+    gap: 18px 12px;
+  }
+  .premium-plan-card button,
+  .premium-active-pill {
+    grid-column: 1 / -1;
+    width: 100%;
   }
   .checkout-result-card {
     padding: 32px 20px;
