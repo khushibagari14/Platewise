@@ -13,6 +13,7 @@ import {
   Camera,
   ChevronLeft,
   ChevronRight,
+  CreditCard,
   History,
   ImagePlus,
   Leaf,
@@ -36,6 +37,7 @@ import {
 import Image from 'next/image';
 import { MealAnalysis, MealItem, SavedMeal, totalMeal } from '@/lib/nutrition';
 import { DailyNutritionCalculator } from './daily-nutrition-calculator';
+import { SubscriptionDetails } from './subscription-details';
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const MAX_PHOTOS = 4;
@@ -434,10 +436,17 @@ export default function Home() {
             </SignUpButton>
           </Show>
           <Show when="signed-in">
-            <UserButton
-              userProfileMode="navigation"
-              userProfileUrl="/profile"
-            />
+            <UserButton userProfileMode="modal">
+              <UserButton.UserProfilePage label="account" />
+              <UserButton.UserProfilePage
+                label="Subscription"
+                labelIcon={<CreditCard size={16} aria-hidden="true" />}
+                url="subscription"
+              >
+                <SubscriptionDetails />
+              </UserButton.UserProfilePage>
+              <UserButton.UserProfilePage label="security" />
+            </UserButton>
           </Show>
           <button
             className="history-button"

@@ -12,18 +12,20 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <ClerkProvider
-      appearance={{
-        variables: {
-          colorPrimary: '#213a2a',
-          colorBackground: '#fffdf7',
-          borderRadius: '0.875rem',
-        },
-      }}
-    >
-      <html lang="en">
-        <body>{children}</body>
-      </html>
-    </ClerkProvider>
+    <html lang="en">
+      <body>
+        <ClerkProvider
+          appearance={{
+            variables: {
+              colorPrimary: '#213a2a',
+              colorBackground: '#fffdf7',
+              borderRadius: '0.875rem',
+            },
+          }}
+        >
+          {children}
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }

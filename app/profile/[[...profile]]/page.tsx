@@ -1,10 +1,8 @@
-import { UserProfile } from '@clerk/nextjs';
 import { auth } from '@clerk/nextjs/server';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { clerkClient } from '@clerk/nextjs/server';
-import { BillingCard } from '../billing-card';
+import { AccountProfile } from '../../account-profile';
 
 export default async function ProfilePage() {
   const { userId } = await auth();
@@ -12,11 +10,6 @@ export default async function ProfilePage() {
   if (!userId) {
     redirect('/sign-in?redirect_url=/profile');
   }
-
-  const user = await (await clerkClient()).users.getUser(userId);
-  const billing = user.publicMetadata.billing as
-    | { premium?: boolean; status?: string }
-    | undefined;
 
   return (
     <main className="profile-page">
@@ -32,13 +25,8 @@ export default async function ProfilePage() {
           <p>Add a profile photo or update your current one anytime.</p>
         </header>
 
-        <BillingCard
-          isPremium={billing?.premium === true}
-          status={billing?.status}
-        />
-
         <section className="profile-card" aria-label="Profile settings">
-          <UserProfile routing="path" path="/profile" />
+          <AccountProfile />
         </section>
       </div>
     </main>

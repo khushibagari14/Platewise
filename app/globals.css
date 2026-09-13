@@ -1559,6 +1559,170 @@ input:focus-visible {
 .profile-card .cl-navbar {
   border-right-color: var(--line);
 }
+.account-subscription-page {
+  width: min(100%, 720px);
+  padding: 8px 0 4px;
+  color: var(--ink);
+}
+.account-subscription-heading {
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+.account-subscription-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: var(--tomato);
+  background: var(--tomato-soft);
+  display: grid;
+  place-items: center;
+}
+.account-subscription-heading h2 {
+  margin: 0;
+  color: var(--olive);
+  font-size: 1.22rem;
+}
+.account-subscription-heading p {
+  margin: 4px 0 0;
+  color: var(--ink-muted);
+  font-size: 0.88rem;
+}
+.account-plan-card {
+  margin-top: 20px;
+  padding: 22px;
+  border: 1px solid rgba(31, 52, 37, 0.13);
+  border-radius: 20px;
+  background: linear-gradient(145deg, #fffdf7, #f2ecdc);
+}
+.account-plan-topline,
+.account-plan-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+.account-plan-topline > span {
+  color: var(--tomato);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.account-plan-status {
+  padding: 6px 10px;
+  border-radius: 999px;
+  color: var(--ink-muted);
+  background: rgba(31, 52, 37, 0.08);
+  font-size: 0.72rem;
+  text-transform: capitalize;
+}
+.account-plan-status.active {
+  color: var(--olive);
+  background: #dfe9d3;
+}
+.account-plan-main {
+  margin-top: 20px;
+  align-items: flex-end;
+}
+.account-plan-main h3 {
+  margin: 0 0 5px;
+  color: var(--olive);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.65rem;
+}
+.account-plan-main p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.86rem;
+}
+.account-plan-price {
+  flex: 0 0 auto;
+  text-align: right;
+}
+.account-plan-price strong {
+  display: block;
+  color: var(--olive);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2.35rem;
+  line-height: 0.9;
+}
+.account-plan-price span {
+  color: var(--ink-muted);
+  font-size: 0.76rem;
+}
+.account-billing-facts {
+  margin: 22px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.account-billing-facts dt {
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+}
+.account-billing-facts dd {
+  margin: 4px 0 0;
+  color: var(--olive);
+  font-size: 0.86rem;
+  font-weight: 750;
+  text-transform: capitalize;
+}
+.account-feature-list {
+  margin: 14px 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.account-feature-list > div {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  color: var(--olive);
+  background: var(--paper);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.83rem;
+  font-weight: 700;
+}
+.account-feature-list svg {
+  color: var(--tomato);
+}
+.account-billing-action {
+  width: 100%;
+  min-height: 50px;
+  border: 0;
+  border-radius: 14px;
+  color: white;
+  background: var(--olive);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.account-billing-action:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+.account-billing-note,
+.account-billing-error {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 0.75rem;
+}
+.account-billing-note {
+  color: var(--ink-muted);
+}
+.account-billing-error {
+  color: var(--tomato);
+}
 .premium-panel {
   margin-bottom: 26px;
   padding: 28px;
@@ -2043,6 +2207,21 @@ input:focus-visible {
   }
   .profile-card .cl-cardBox {
     border-radius: 22px;
+  }
+  .account-plan-card {
+    padding: 18px 15px;
+  }
+  .account-plan-main {
+    align-items: flex-start;
+  }
+  .account-plan-price strong {
+    font-size: 2rem;
+  }
+  .account-billing-facts {
+    grid-template-columns: 1fr;
+  }
+  .account-feature-list {
+    grid-template-columns: 1fr;
   }
   .premium-panel {
     padding: 22px 16px;

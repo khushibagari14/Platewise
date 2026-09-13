@@ -7,7 +7,9 @@ async function syncSubscription(data: {
   subscription_id: string;
   product_id: string;
   status: string;
-  next_billing_date: Date;
+  next_billing_date: Date | string;
+  created_at: Date | string;
+  trial_period_days: number;
 }) {
   const userId = data.metadata.clerkUserId;
   const productId = process.env.DODO_PAYMENTS_PRODUCT_ID;
@@ -22,6 +24,11 @@ async function syncSubscription(data: {
   }
 
   const premium = data.status === 'active';
+  const createdAt = new Date(data.created_at);
+  const nextBillingDate = new Date(data.next_billing_date);
+  const trialEndsAt = new Date(
+    createdAt.getTime() + data.trial_period_days * 24 * 60 * 60 * 1000,
+  );
   await (
     await clerkClient()
   ).users.updateUserMetadata(userId, {
@@ -29,7 +36,13 @@ async function syncSubscription(data: {
       billing: {
         premium,
         status: data.status,
-        nextBillingDate: data.next_billing_date.toISOString(),
+        nextBillingDate: Number.isNaN(nextBillingDate.getTime())
+          ? null
+          : nextBillingDate.toISOString(),
+        trialEndsAt:
+          data.trial_period_days > 0 && !Number.isNaN(trialEndsAt.getTime())
+            ? trialEndsAt.toISOString()
+            : null,
       },
     },
     privateMetadata: {

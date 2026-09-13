@@ -50,7 +50,7 @@ export async function POST(request: Request) {
           email,
           name: user.fullName || user.firstName || 'Platewise member',
         },
-        billing_currency: 'INR',
+        billing_currency: 'USD',
         metadata: {
           clerkUserId: userId,
           plan: 'platewise_premium_monthly',
