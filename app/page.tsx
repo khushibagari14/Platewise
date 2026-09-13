@@ -400,9 +400,9 @@ export default function Home() {
     } catch {}
   }
   function openHistory() {
-    const date = history[0] ? new Date(history[0].createdAt) : new Date();
-    setCalendarMonth(new Date(date.getFullYear(), date.getMonth(), 1));
-    setSelectedDate(dateKey(date));
+    const today = new Date();
+    setCalendarMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+    setSelectedDate(dateKey(today));
     setHasUnseenHistory(false);
     try {
       localStorage.setItem(
