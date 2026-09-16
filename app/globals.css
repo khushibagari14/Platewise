@@ -998,16 +998,19 @@ h1 {
 }
 .calendar-weekdays,
 .calendar-grid {
+  width: 100%;
+  min-width: 0;
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 4px;
 }
 .calendar-weekdays span {
   padding: 5px 0 7px;
   text-align: center;
   color: var(--ink-muted);
-  font-size: 0.7rem;
+  font-size: clamp(0.58rem, 2.4vw, 0.7rem);
   font-weight: 750;
+  letter-spacing: -0.02em;
 }
 .calendar-grid button {
   position: relative;
@@ -1136,8 +1139,80 @@ h1 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
+.nutrition-form-intro {
+  grid-column: 1/-1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 13px 14px;
+  border: 1px solid rgb(194 72 48 / 16%);
+  border-radius: 14px;
+  background: rgb(194 72 48 / 6%);
+}
+.nutrition-form-intro strong {
+  color: var(--olive);
+  font-size: 0.9rem;
+}
+.nutrition-form-intro span {
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
 .nutrition-profile-form label {
   min-width: 0;
+}
+.height-field {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.height-field-heading {
+  display: flex;
+  min-height: 25px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.height-field-heading legend {
+  padding: 0;
+  color: var(--olive);
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+.height-unit-switch {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--cream);
+}
+.height-unit-switch button {
+  min-width: 34px;
+  min-height: 26px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--ink-muted);
+  background: transparent;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+.height-unit-switch button.active {
+  color: white;
+  background: var(--olive);
+  box-shadow: 0 2px 7px rgb(28 57 40 / 18%);
+}
+.height-unit-switch button:focus-visible {
+  outline: 2px solid var(--tomato);
+  outline-offset: 2px;
+}
+.height-feet-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 .nutrition-profile-form label > span {
   display: block;
@@ -1156,6 +1231,10 @@ h1 {
   color: var(--ink);
   background: var(--paper);
   font: inherit;
+}
+.nutrition-profile-form input::placeholder,
+.nutrition-profile-form select:invalid {
+  color: color-mix(in srgb, var(--ink-muted) 72%, white);
 }
 .field-with-unit {
   position: relative;
@@ -1558,6 +1637,54 @@ input:focus-visible {
 }
 .profile-card .cl-navbar {
   border-right-color: var(--line);
+}
+.subscription-page {
+  min-height: 100vh;
+  padding: 34px 20px 64px;
+  background:
+    radial-gradient(circle at 88% 8%, rgba(197, 80, 56, 0.12), transparent 28%),
+    var(--cream);
+}
+.subscription-shell {
+  width: min(100%, 800px);
+  margin: 0 auto;
+}
+.subscription-page-heading {
+  max-width: 650px;
+  margin: 34px 0 24px;
+}
+.subscription-page-heading > span {
+  color: var(--tomato);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.76rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+}
+.subscription-page-heading h1 {
+  margin: 9px 0 10px;
+  color: var(--olive);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.7rem, 8vw, 4.8rem);
+  line-height: 0.98;
+}
+.subscription-page-heading p {
+  max-width: 590px;
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+.subscription-page-card {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: var(--paper);
+  box-shadow: 0 24px 58px rgba(31, 52, 37, 0.11);
+}
+.subscription-page-card .account-subscription-page {
+  width: 100%;
 }
 .account-subscription-page {
   width: min(100%, 720px);
@@ -2148,9 +2275,9 @@ input:focus-visible {
     border-radius: 19px;
   }
   .calendar-grid button {
-    width: 42px;
-    height: 42px;
-    min-height: 42px;
+    width: min(42px, 100%);
+    height: auto;
+    min-height: 0;
     aspect-ratio: 1 / 1;
   }
   .day-total {
@@ -2167,16 +2294,23 @@ input:focus-visible {
     padding: 16px 14px;
   }
   .nutrition-goal-heading {
-    grid-template-columns: 40px minmax(0, 1fr);
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    gap: 9px;
   }
   .nutrition-goal-icon {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+  }
+  .nutrition-goal-heading h3 {
+    font-size: 1.16rem;
+    line-height: 1.08;
   }
   .nutrition-edit {
-    grid-column: 1/-1;
-    width: 100%;
-    justify-content: center;
+    min-height: 36px;
+    padding: 0 9px;
+    border-radius: 999px;
+    font-size: 0.75rem;
   }
   .nutrition-profile-form {
     grid-template-columns: 1fr;
@@ -2206,6 +2340,19 @@ input:focus-visible {
     border-radius: 22px;
   }
   .profile-card .cl-cardBox {
+    border-radius: 22px;
+  }
+  .subscription-page {
+    padding: 22px 12px 40px;
+  }
+  .subscription-page-heading {
+    margin: 26px 8px 19px;
+  }
+  .subscription-page-heading h1 {
+    font-size: 2.75rem;
+  }
+  .subscription-page-card {
+    padding: 20px 15px;
     border-radius: 22px;
   }
   .account-plan-card {

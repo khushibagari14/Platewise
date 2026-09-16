@@ -6,15 +6,16 @@ import type { SyntheticEvent } from 'react';
 import type { Nutrients } from '@/lib/nutrition';
 
 type Profile = {
-  gender: 'female' | 'male' | 'other';
+  gender: '' | 'female' | 'male' | 'other';
   age: number;
   height: number;
   weight: number;
-  activity: 'sedentary' | 'light' | 'moderate' | 'very';
-  goal: 'lose' | 'maintain' | 'gain';
+  activity: '' | 'sedentary' | 'light' | 'moderate' | 'very';
+  goal: '' | 'lose' | 'maintain' | 'gain';
 };
 
 type Targets = Nutrients;
+type HeightUnit = 'cm' | 'ft' | 'm';
 
 const PROFILE_KEY = 'platewise:nutrition-profile';
 const activityFactors = {
@@ -25,12 +26,12 @@ const activityFactors = {
 };
 const proteinFactors = { sedentary: 1.2, light: 1.4, moderate: 1.6, very: 1.8 };
 const defaultProfile: Profile = {
-  gender: 'female',
-  age: 28,
-  height: 165,
-  weight: 60,
-  activity: 'moderate',
-  goal: 'maintain',
+  gender: '',
+  age: 0,
+  height: 0,
+  weight: 0,
+  activity: '',
+  goal: '',
 };
 
 function calculateTargets(profile: Profile): Targets {
@@ -42,14 +43,16 @@ function calculateTargets(profile: Profile): Targets {
   const calories = Math.max(
     1200,
     Math.round(
-      (base + genderAdjustment) * activityFactors[profile.activity] +
+      (base + genderAdjustment) *
+        activityFactors[profile.activity || 'moderate'] +
         goalAdjustment,
     ),
   );
   const proteinGoalAdjustment =
     profile.goal === 'gain' ? 0.2 : profile.goal === 'lose' ? 0.15 : 0;
   const protein = Math.round(
-    profile.weight * (proteinFactors[profile.activity] + proteinGoalAdjustment),
+    profile.weight *
+      (proteinFactors[profile.activity || 'moderate'] + proteinGoalAdjustment),
   );
   const fat = Math.round((calories * 0.27) / 9);
   const carbs = Math.max(0, Math.round((calories - protein * 4 - fat * 9) / 4));
@@ -66,6 +69,7 @@ export function DailyNutritionCalculator({
 }) {
   const [profile, setProfile] = useState<Profile>(defaultProfile);
   const [savedProfile, setSavedProfile] = useState<Profile | null>(null);
+  const [heightUnit, setHeightUnit] = useState<HeightUnit>('cm');
   const [expanded, setExpanded] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
   const notifiedDate = useRef<string | null>(null);
@@ -82,6 +86,20 @@ export function DailyNutritionCalculator({
   const proteinProgress = targets
     ? Math.min(100, Math.round((consumed.protein / targets.protein) * 100))
     : 0;
+  const heightFeet = profile.height ? Math.floor(profile.height / 30.48) : 0;
+  const heightInches = profile.height
+    ? Math.round(profile.height / 2.54 - heightFeet * 12)
+    : 0;
+  const heightMetres = profile.height
+    ? Number((profile.height / 100).toFixed(2))
+    : 0;
+
+  function updateFeetHeight(feet: number, inches: number) {
+    setProfile({
+      ...profile,
+      height: Number((feet * 30.48 + inches * 2.54).toFixed(1)),
+    });
+  }
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -111,6 +129,7 @@ export function DailyNutritionCalculator({
 
   function save(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!profile.gender || !profile.activity || !profile.goal) return;
     const safeProfile = {
       ...profile,
       age: Math.min(100, Math.max(14, profile.age)),
@@ -153,22 +172,33 @@ export function DailyNutritionCalculator({
           <span className="step-label">Your daily nutrition</span>
           <h3 id="nutrition-goal-title">Personal nutrition goal</h3>
         </div>
-        <button
-          type="button"
-          className="nutrition-edit"
-          onClick={() => setExpanded((value) => !value)}
-          aria-expanded={expanded}
-        >
-          {savedProfile ? 'Edit details' : 'Set up'}{' '}
-          <ChevronDown className={expanded ? 'open' : ''} size={17} />
-        </button>
+        {savedProfile ? (
+          <button
+            type="button"
+            className="nutrition-edit"
+            onClick={() => setExpanded((value) => !value)}
+            aria-expanded={expanded}
+          >
+            Edit details
+            <ChevronDown className={expanded ? 'open' : ''} size={17} />
+          </button>
+        ) : null}
       </div>
 
       {expanded || !savedProfile ? (
         <form className="nutrition-profile-form" onSubmit={save}>
+          {!savedProfile ? (
+            <div className="nutrition-form-intro">
+              <strong>Let’s set your daily targets</strong>
+              <span>
+                Add your details once. You can update them whenever they change.
+              </span>
+            </div>
+          ) : null}
           <label>
             <span>Gender</span>
             <select
+              required
               value={profile.gender}
               onChange={(event) =>
                 setProfile({
@@ -177,6 +207,9 @@ export function DailyNutritionCalculator({
                 })
               }
             >
+              <option value="" disabled>
+                Select gender
+              </option>
               <option value="female">Woman</option>
               <option value="male">Man</option>
               <option value="other">Another identity</option>
@@ -190,7 +223,8 @@ export function DailyNutritionCalculator({
                 type="number"
                 min="14"
                 max="100"
-                value={profile.age}
+                placeholder="e.g. 28"
+                value={profile.age || ''}
                 onChange={(event) =>
                   setProfile({ ...profile, age: Number(event.target.value) })
                 }
@@ -198,22 +232,87 @@ export function DailyNutritionCalculator({
               <small>years</small>
             </div>
           </label>
-          <label>
-            <span>Height</span>
-            <div className="field-with-unit">
-              <input
-                required
-                type="number"
-                min="120"
-                max="230"
-                value={profile.height}
-                onChange={(event) =>
-                  setProfile({ ...profile, height: Number(event.target.value) })
-                }
-              />
-              <small>cm</small>
+          <fieldset className="height-field">
+            <div className="height-field-heading">
+              <legend>Height</legend>
+              <div className="height-unit-switch" aria-label="Height unit">
+                {(['cm', 'ft', 'm'] as HeightUnit[]).map((unit) => (
+                  <button
+                    key={unit}
+                    type="button"
+                    className={heightUnit === unit ? 'active' : ''}
+                    onClick={() => setHeightUnit(unit)}
+                    aria-pressed={heightUnit === unit}
+                  >
+                    {unit === 'ft' ? 'ft / in' : unit}
+                  </button>
+                ))}
+              </div>
             </div>
-          </label>
+            {heightUnit === 'ft' ? (
+              <div className="height-feet-fields">
+                <div className="field-with-unit">
+                  <input
+                    required
+                    aria-label="Height in feet"
+                    type="number"
+                    min="3"
+                    max="7"
+                    placeholder="5"
+                    value={heightFeet || ''}
+                    onChange={(event) =>
+                      updateFeetHeight(Number(event.target.value), heightInches)
+                    }
+                  />
+                  <small>ft</small>
+                </div>
+                <div className="field-with-unit">
+                  <input
+                    required
+                    aria-label="Additional height in inches"
+                    type="number"
+                    min="0"
+                    max="11"
+                    placeholder="6"
+                    value={profile.height ? heightInches : ''}
+                    onChange={(event) =>
+                      updateFeetHeight(heightFeet, Number(event.target.value))
+                    }
+                  />
+                  <small>in</small>
+                </div>
+              </div>
+            ) : (
+              <div className="field-with-unit">
+                <input
+                  required
+                  aria-label={`Height in ${heightUnit === 'cm' ? 'centimetres' : 'metres'}`}
+                  type="number"
+                  min={heightUnit === 'cm' ? 120 : 1.2}
+                  max={heightUnit === 'cm' ? 230 : 2.3}
+                  step={heightUnit === 'cm' ? 1 : 0.01}
+                  placeholder={heightUnit === 'cm' ? 'e.g. 165' : 'e.g. 1.65'}
+                  value={
+                    heightUnit === 'cm'
+                      ? profile.height || ''
+                      : heightMetres || ''
+                  }
+                  onChange={(event) =>
+                    setProfile({
+                      ...profile,
+                      height:
+                        heightUnit === 'cm'
+                          ? Number(event.target.value)
+                          : Number(
+                              (Number(event.target.value) * 100).toFixed(1),
+                            ),
+                    })
+                  }
+                />
+                <small>{heightUnit}</small>
+              </div>
+            )}
+          </fieldset>
           <label>
             <span>Weight</span>
             <div className="field-with-unit">
@@ -223,7 +322,8 @@ export function DailyNutritionCalculator({
                 min="30"
                 max="300"
                 step="0.1"
-                value={profile.weight}
+                placeholder="e.g. 60"
+                value={profile.weight || ''}
                 onChange={(event) =>
                   setProfile({ ...profile, weight: Number(event.target.value) })
                 }
@@ -234,6 +334,7 @@ export function DailyNutritionCalculator({
           <label className="wide">
             <span>Activity level</span>
             <select
+              required
               value={profile.activity}
               onChange={(event) =>
                 setProfile({
@@ -242,6 +343,9 @@ export function DailyNutritionCalculator({
                 })
               }
             >
+              <option value="" disabled>
+                Select activity level
+              </option>
               <option value="sedentary">Mostly seated</option>
               <option value="light">Lightly active</option>
               <option value="moderate">Moderately active</option>
@@ -251,6 +355,7 @@ export function DailyNutritionCalculator({
           <label className="wide">
             <span>Goal</span>
             <select
+              required
               value={profile.goal}
               onChange={(event) =>
                 setProfile({
@@ -259,6 +364,9 @@ export function DailyNutritionCalculator({
                 })
               }
             >
+              <option value="" disabled>
+                Select your goal
+              </option>
               <option value="lose">Lose weight gradually</option>
               <option value="maintain">Maintain weight</option>
               <option value="gain">Gain weight or muscle</option>

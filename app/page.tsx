@@ -13,7 +13,6 @@ import {
   Camera,
   ChevronLeft,
   ChevronRight,
-  CreditCard,
   History,
   ImagePlus,
   Leaf,
@@ -26,24 +25,18 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import {
-  ChangeEvent,
-  useEffect,
-  useEffectEvent,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { MealAnalysis, MealItem, SavedMeal, totalMeal } from '@/lib/nutrition';
 import { DailyNutritionCalculator } from './daily-nutrition-calculator';
-import { SubscriptionDetails } from './subscription-details';
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const MAX_PHOTOS = 4;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const STORAGE_KEY = 'platewise:recent-meals';
 const HISTORY_SEEN_KEY = 'platewise:history-seen-at';
+const POST_SIGNUP_SUBSCRIPTION_KEY = 'platewise:open-subscription-after-signup';
 
 declare global {
   interface Document {
@@ -95,12 +88,13 @@ async function compressImage(
 }
 
 export default function Home() {
+  const router = useRouter();
   const { isLoaded, isSignedIn } = useAuth();
   const { openSignUp } = useClerk();
   const cameraRef = useRef<HTMLInputElement>(null);
   const libraryRef = useRef<HTMLInputElement>(null);
   const swipeStartX = useRef<number | null>(null);
-  const pendingSignupAnalysis = useRef(false);
+  const pendingSubscriptionRedirect = useRef(false);
   const [photos, setPhotos] = useState<
     { id: string; blob: Blob; preview: string }[]
   >([]);
@@ -227,10 +221,6 @@ export default function Home() {
       if (!preview) setPreview(additions[0].preview);
       setAnalysis(null);
       setStatus('ready');
-      if (!isSignedIn) {
-        pendingSignupAnalysis.current = true;
-        if (isLoaded) openSignUp();
-      }
       if (files.length > available.length)
         setError(
           `We added the first ${available.length}. A meal can have up to ${MAX_PHOTOS} photos.`,
@@ -243,7 +233,10 @@ export default function Home() {
   async function analyzeMeal() {
     if (!photos.length) return;
     if (!isSignedIn) {
-      pendingSignupAnalysis.current = true;
+      pendingSubscriptionRedirect.current = true;
+      try {
+        sessionStorage.setItem(POST_SIGNUP_SUBSCRIPTION_KEY, '1');
+      } catch {}
       if (isLoaded) openSignUp();
       return;
     }
@@ -289,26 +282,20 @@ export default function Home() {
     }
   }
 
-  const resumePendingAnalysis = useEffectEvent(analyzeMeal);
   useEffect(() => {
-    if (
-      !isLoaded ||
-      !pendingSignupAnalysis.current ||
-      !photos.length ||
-      status !== 'ready'
-    )
-      return;
-    if (!isSignedIn) {
-      openSignUp();
-      return;
-    }
-    pendingSignupAnalysis.current = false;
-    const resumeTimer = window.setTimeout(
-      () => void resumePendingAnalysis(),
-      0,
-    );
-    return () => window.clearTimeout(resumeTimer);
-  }, [isLoaded, isSignedIn, openSignUp, photos.length, status]);
+    if (!isLoaded || !isSignedIn) return;
+    let shouldOpenSubscription = pendingSubscriptionRedirect.current;
+    try {
+      shouldOpenSubscription ||=
+        sessionStorage.getItem(POST_SIGNUP_SUBSCRIPTION_KEY) === '1';
+    } catch {}
+    if (!shouldOpenSubscription) return;
+    pendingSubscriptionRedirect.current = false;
+    try {
+      sessionStorage.removeItem(POST_SIGNUP_SUBSCRIPTION_KEY);
+    } catch {}
+    router.push('/subscription');
+  }, [isLoaded, isSignedIn, router]);
 
   function updateItem(id: string, itemPatch: Partial<MealItem>) {
     setAnalysis((current) => {
@@ -436,17 +423,7 @@ export default function Home() {
             </SignUpButton>
           </Show>
           <Show when="signed-in">
-            <UserButton userProfileMode="modal">
-              <UserButton.UserProfilePage label="account" />
-              <UserButton.UserProfilePage
-                label="Subscription"
-                labelIcon={<CreditCard size={16} aria-hidden="true" />}
-                url="subscription"
-              >
-                <SubscriptionDetails />
-              </UserButton.UserProfilePage>
-              <UserButton.UserProfilePage label="security" />
-            </UserButton>
+            <UserButton userProfileMode="modal" />
           </Show>
           <button
             className="history-button"
@@ -934,7 +911,7 @@ export default function Home() {
               <div className="calendar-weekdays" aria-hidden="true">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
                   (day) => (
-                    <span key={day}>{day.slice(0, 1)}</span>
+                    <span key={day}>{day}</span>
                   ),
                 )}
               </div>
