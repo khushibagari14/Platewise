@@ -1,5 +1,6 @@
 'use client';
 
+import { useAuth } from '@clerk/nextjs';
 import { CheckCircle2, ChevronDown, Target, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { SyntheticEvent } from 'react';
@@ -67,8 +68,10 @@ export function DailyNutritionCalculator({
   consumed: Nutrients;
   selectedDate: string;
 }) {
+  const { isLoaded, userId } = useAuth();
   const [profile, setProfile] = useState<Profile>(defaultProfile);
   const [savedProfile, setSavedProfile] = useState<Profile | null>(null);
+  const [syncError, setSyncError] = useState(false);
   const [heightUnit, setHeightUnit] = useState<HeightUnit>('cm');
   const [expanded, setExpanded] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
@@ -102,18 +105,45 @@ export function DailyNutritionCalculator({
   }
 
   useEffect(() => {
-    queueMicrotask(() => {
+    if (!isLoaded) return;
+    let active = true;
+    queueMicrotask(async () => {
       try {
         const saved = JSON.parse(
-          localStorage.getItem(PROFILE_KEY) || 'null',
+          localStorage.getItem(`${PROFILE_KEY}:${userId || 'guest'}`) || 'null',
         ) as Profile | null;
-        if (saved?.age && saved?.height && saved?.weight) {
+        if (active && saved?.age && saved?.height && saved?.weight) {
           setProfile(saved);
           setSavedProfile(saved);
         }
       } catch {}
+      if (!userId) return;
+      try {
+        const response = await fetch('/api/nutrition-profile', {
+          cache: 'no-store',
+        });
+        if (!response.ok) {
+          if (active && response.status !== 503) setSyncError(true);
+          return;
+        }
+        const body = (await response.json()) as { profile?: Profile | null };
+        if (!active) return;
+        setSyncError(false);
+        setProfile(body.profile || defaultProfile);
+        setSavedProfile(body.profile || null);
+        if (body.profile)
+          localStorage.setItem(
+            `${PROFILE_KEY}:${userId}`,
+            JSON.stringify(body.profile),
+          );
+      } catch {
+        if (active) setSyncError(true);
+      }
     });
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [isLoaded, userId]);
 
   useEffect(() => {
     if (!proteinGoalReached) {
@@ -139,7 +169,19 @@ export function DailyNutritionCalculator({
     setProfile(safeProfile);
     setSavedProfile(safeProfile);
     setExpanded(false);
-    localStorage.setItem(PROFILE_KEY, JSON.stringify(safeProfile));
+    localStorage.setItem(
+      `${PROFILE_KEY}:${userId || 'guest'}`,
+      JSON.stringify(safeProfile),
+    );
+    if (userId) {
+      void fetch('/api/nutrition-profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(safeProfile),
+      })
+        .then((response) => setSyncError(!response.ok))
+        .catch(() => setSyncError(true));
+    }
   }
 
   return (
@@ -161,6 +203,13 @@ export function DailyNutritionCalculator({
           >
             <X size={17} />
           </button>
+        </output>
+      ) : null}
+
+      {syncError ? (
+        <output className="nutrition-sync-note">
+          Your goal is saved on this device, but cloud sync is unavailable. It
+          will be retried when you edit your details.
         </output>
       ) : null}
 

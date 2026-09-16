@@ -921,6 +921,46 @@ h1 {
   background: var(--paper);
   box-shadow: -20px 0 60px rgba(20, 30, 22, 0.15);
 }
+.history-sync-note,
+.nutrition-sync-note {
+  margin: 12px 0 0;
+  color: #8b3f2e;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+.history-import-card {
+  margin-top: 15px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--cream);
+}
+.history-import-card strong {
+  color: var(--olive);
+  font-size: 0.86rem;
+}
+.history-import-card p {
+  margin: 5px 0 10px;
+  color: var(--ink-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+.history-import-card button {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  color: white;
+  background: var(--olive);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+.history-import-card button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
 .drawer-header {
   display: flex;
   justify-content: space-between;

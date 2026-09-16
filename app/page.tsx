@@ -29,6 +29,7 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { MealAnalysis, MealItem, SavedMeal, totalMeal } from '@/lib/nutrition';
+import { flushMealOperations, queueMealOperation } from '@/lib/meal-sync';
 import { DailyNutritionCalculator } from './daily-nutrition-calculator';
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
@@ -49,9 +50,13 @@ declare global {
   }
 }
 
-function readHistory(): SavedMeal[] {
+function historyKey(userId?: string | null) {
+  return userId ? `${STORAGE_KEY}:${userId}` : STORAGE_KEY;
+}
+
+function readHistory(userId?: string | null): SavedMeal[] {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    return JSON.parse(localStorage.getItem(historyKey(userId)) || '[]');
   } catch {
     return [];
   }
@@ -89,7 +94,7 @@ async function compressImage(
 
 export default function Home() {
   const router = useRouter();
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn, userId } = useAuth();
   const { openSignUp } = useClerk();
   const cameraRef = useRef<HTMLInputElement>(null);
   const libraryRef = useRef<HTMLInputElement>(null);
@@ -117,15 +122,118 @@ export default function Home() {
     null,
   );
   const [hasUnseenHistory, setHasUnseenHistory] = useState(false);
+  const [cloudHistory, setCloudHistory] = useState(false);
+  const [historySyncError, setHistorySyncError] = useState('');
+  const [legacyMealCount, setLegacyMealCount] = useState(0);
+  const [importingMeals, setImportingMeals] = useState(false);
 
   useEffect(() => {
-    queueMicrotask(() => {
-      const saved = readHistory();
+    if (!isLoaded) return;
+    let active = true;
+    queueMicrotask(async () => {
+      const saved = readHistory(userId);
       const seenAt = localStorage.getItem(HISTORY_SEEN_KEY) || '';
+      if (!active) return;
       setHistory(saved);
       setHasUnseenHistory(Boolean(saved[0] && saved[0].createdAt > seenAt));
+      setCloudHistory(false);
+      setLegacyMealCount(
+        userId && !localStorage.getItem(`platewise:legacy-imported:${userId}`)
+          ? readHistory().length
+          : 0,
+      );
+      if (!userId) return;
+      try {
+        await flushMealOperations(userId);
+        const response = await fetch('/api/meals', { cache: 'no-store' });
+        if (!response.ok) {
+          if (response.status !== 503)
+            setHistorySyncError(
+              'Cloud history is temporarily unavailable. Changes are saved on this device.',
+            );
+          return;
+        }
+        const body = (await response.json()) as { meals?: SavedMeal[] };
+        if (!active || !Array.isArray(body.meals)) return;
+        setCloudHistory(true);
+        setHistory(body.meals);
+        localStorage.setItem(historyKey(userId), JSON.stringify(body.meals));
+        setHasUnseenHistory(
+          Boolean(body.meals[0] && body.meals[0].createdAt > seenAt),
+        );
+        setHistorySyncError('');
+      } catch {
+        if (active)
+          setHistorySyncError(
+            'Cloud history is temporarily unavailable. Changes are saved on this device.',
+          );
+      }
     });
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [isLoaded, userId]);
+
+  function saveHistoryLocal(meals: SavedMeal[]) {
+    try {
+      localStorage.setItem(historyKey(userId), JSON.stringify(meals));
+    } catch {}
+  }
+
+  async function syncMeal(meal: SavedMeal) {
+    if (!userId) return;
+    try {
+      queueMealOperation(userId, { type: 'save', meal });
+      await flushMealOperations(userId);
+      setHistorySyncError('');
+    } catch {
+      setHistorySyncError(
+        'Cloud sync failed. This change is saved on this device only.',
+      );
+    }
+  }
+
+  async function deleteCloudMeal(id?: string) {
+    if (!userId) return;
+    try {
+      queueMealOperation(
+        userId,
+        id ? { type: 'delete', id } : { type: 'clear' },
+      );
+      await flushMealOperations(userId);
+      setHistorySyncError('');
+    } catch {
+      setHistorySyncError(
+        'Cloud sync failed. This change is saved on this device only.',
+      );
+    }
+  }
+
+  async function importDeviceMeals() {
+    if (!userId || !cloudHistory || importingMeals) return;
+    setImportingMeals(true);
+    try {
+      const legacyMeals = readHistory();
+      for (const meal of legacyMeals) {
+        queueMealOperation(userId, { type: 'save', meal });
+        await flushMealOperations(userId);
+      }
+      const response = await fetch('/api/meals', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Could not reload meals.');
+      const body = (await response.json()) as { meals: SavedMeal[] };
+      setHistory(body.meals);
+      saveHistoryLocal(body.meals);
+      localStorage.setItem(`platewise:legacy-imported:${userId}`, '1');
+      setLegacyMealCount(0);
+      setHistorySyncError('');
+    } catch {
+      setHistorySyncError(
+        'Could not import all device meals. Please try again.',
+      );
+    } finally {
+      setImportingMeals(false);
+    }
+  }
   useEffect(() => {
     const context = document.modelContext;
     if (!context?.registerTool) return;
@@ -269,9 +377,8 @@ export default function Home() {
       const nextHistory = [saved, ...history].slice(0, 180);
       setHistory(nextHistory);
       setHasUnseenHistory(true);
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextHistory));
-      } catch {}
+      saveHistoryLocal(nextHistory);
+      void syncMeal(saved);
     } catch (reason) {
       setError(
         reason instanceof Error
@@ -298,53 +405,39 @@ export default function Home() {
   }, [isLoaded, isSignedIn, router]);
 
   function updateItem(id: string, itemPatch: Partial<MealItem>) {
-    setAnalysis((current) => {
-      if (!current) return current;
-      const updated = {
-        ...current,
-        items: current.items.map((item) =>
-          item.id === id ? { ...item, ...itemPatch } : item,
-        ),
-      };
-      if (currentMealId) {
-        setHistory((savedMeals) => {
-          const next = savedMeals.map((meal) =>
-            meal.id === currentMealId
-              ? { ...meal, items: updated.items }
-              : meal,
-          );
-          try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-          } catch {}
-          return next;
-        });
-      }
-      return updated;
-    });
+    if (!analysis) return;
+    const updated = {
+      ...analysis,
+      items: analysis.items.map((item) =>
+        item.id === id ? { ...item, ...itemPatch } : item,
+      ),
+    };
+    setAnalysis(updated);
+    if (!currentMealId) return;
+    const next = history.map((meal) =>
+      meal.id === currentMealId ? { ...meal, items: updated.items } : meal,
+    );
+    setHistory(next);
+    saveHistoryLocal(next);
+    const changed = next.find((meal) => meal.id === currentMealId);
+    if (changed) void syncMeal(changed);
   }
   function deleteItem(id: string) {
     setOpenDeleteId(null);
-    setAnalysis((current) => {
-      if (!current) return current;
-      const updated = {
-        ...current,
-        items: current.items.filter((item) => item.id !== id),
-      };
-      if (currentMealId) {
-        setHistory((savedMeals) => {
-          const next = savedMeals.map((meal) =>
-            meal.id === currentMealId
-              ? { ...meal, items: updated.items }
-              : meal,
-          );
-          try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-          } catch {}
-          return next;
-        });
-      }
-      return updated;
-    });
+    if (!analysis) return;
+    const updated = {
+      ...analysis,
+      items: analysis.items.filter((item) => item.id !== id),
+    };
+    setAnalysis(updated);
+    if (!currentMealId) return;
+    const next = history.map((meal) =>
+      meal.id === currentMealId ? { ...meal, items: updated.items } : meal,
+    );
+    setHistory(next);
+    saveHistoryLocal(next);
+    const changed = next.find((meal) => meal.id === currentMealId);
+    if (changed) void syncMeal(changed);
   }
   function removePhoto(id?: string) {
     if (id) {
@@ -373,18 +466,18 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   function clearHistory() {
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(historyKey(userId));
     localStorage.removeItem(HISTORY_SEEN_KEY);
     setHistory([]);
     setHasUnseenHistory(false);
+    void deleteCloudMeal();
   }
   function deleteSavedMeal(id: string) {
     const next = history.filter((meal) => meal.id !== id);
     setHistory(next);
     setPendingMealDeleteId(null);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {}
+    saveHistoryLocal(next);
+    void deleteCloudMeal(id);
   }
   function openHistory() {
     const today = new Date();
@@ -854,7 +947,11 @@ export default function Home() {
           <aside className="history-drawer" aria-label="Meal calendar">
             <div className="drawer-header">
               <div>
-                <span className="step-label">Saved on this device</span>
+                <span className="step-label">
+                  {cloudHistory
+                    ? 'Saved to your account'
+                    : 'Saved on this device'}
+                </span>
                 <h2>Meal calendar</h2>
               </div>
               <button
@@ -864,6 +961,30 @@ export default function Home() {
                 <X />
               </button>
             </div>
+            {historySyncError ? (
+              <output className="history-sync-note">
+                {historySyncError}
+              </output>
+            ) : null}
+            {cloudHistory && legacyMealCount > 0 ? (
+              <div className="history-import-card">
+                <strong>
+                  {legacyMealCount} older{' '}
+                  {legacyMealCount === 1 ? 'meal' : 'meals'} on this browser
+                </strong>
+                <p>
+                  These were saved before cloud history. Import them only if
+                  they belong to your account.
+                </p>
+                <button
+                  type="button"
+                  disabled={importingMeals}
+                  onClick={() => void importDeviceMeals()}
+                >
+                  {importingMeals ? 'Importing…' : 'Import device meals'}
+                </button>
+              </div>
+            ) : null}
             <section
               className="calendar-card"
               aria-label={calendarMonth.toLocaleDateString(undefined, {
