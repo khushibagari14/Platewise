@@ -17,8 +17,6 @@ import {
   ImagePlus,
   Leaf,
   LoaderCircle,
-  Minus,
-  Plus,
   RotateCcw,
   ShieldCheck,
   Sparkles,
@@ -28,6 +26,7 @@ import {
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { AppTour } from './app-tour';
+import { PortionEditor } from './portion-editor';
 import { MealProcessing } from './meal-processing';
 import { syncErrorMessage } from '@/lib/sync-error';
 import { restoreAccountHistory } from '@/lib/account-history';
@@ -838,7 +837,7 @@ function AccountHome({
                     <span className="step-label">What we found</span>
                     <h3>Foods & portions</h3>
                   </div>
-                  <small>Adjust amounts or swipe left to remove</small>
+                  <small>Edit an amount to update every nutrient</small>
                 </div>
                 {analysis.items.map((item) => (
                   <div
@@ -881,15 +880,9 @@ function AccountHome({
                             updateItem(item.id, { name: e.target.value })
                           }
                         />
-                        <input
-                          className="portion-input"
-                          aria-label={'Portion for ' + item.name}
-                          value={item.portion}
-                          maxLength={60}
-                          onChange={(e) =>
-                            updateItem(item.id, { portion: e.target.value })
-                          }
-                        />
+                        <span className="portion-estimate">
+                          Estimated: {item.portion}
+                        </span>
                       </div>
                       <div className="food-nutrition">
                         <strong>
@@ -899,32 +892,12 @@ function AccountHome({
                           {Math.round(item.protein * item.quantity)}g protein
                         </span>
                       </div>
-                      <div
-                        className="quantity-control"
-                        aria-label={'Quantity of ' + item.name}
-                      >
-                        <button
-                          aria-label="Decrease quantity"
-                          onClick={() =>
-                            updateItem(item.id, {
-                              quantity: Math.max(0.5, item.quantity - 0.5),
-                            })
-                          }
-                        >
-                          <Minus size={15} />
-                        </button>
-                        <span>{item.quantity}×</span>
-                        <button
-                          aria-label="Increase quantity"
-                          onClick={() =>
-                            updateItem(item.id, {
-                              quantity: Math.min(5, item.quantity + 0.5),
-                            })
-                          }
-                        >
-                          <Plus size={15} />
-                        </button>
-                      </div>
+                      <PortionEditor
+                        item={item}
+                        onChange={(quantity) =>
+                          updateItem(item.id, { quantity })
+                        }
+                      />
                       <button
                         className="desktop-delete-food"
                         type="button"

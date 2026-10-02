@@ -3188,3 +3188,12 @@ b {
     padding: 18px 8px 12px;
   }
 }
+.portion-estimate { color: var(--ink-muted); font-size: .78rem; padding: 2px 4px; }
+.portion-editor { min-width: 110px; max-width: 160px; }
+.portion-caption { display: block; font-size: .68rem; color: var(--ink-muted); margin-bottom: 5px; }
+.portion-field { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 10px; padding: 0 10px; background: var(--paper); }
+.portion-field:focus-within { outline: 2px solid var(--olive); outline-offset: 2px; }
+.portion-field input { width: 65px; min-width: 0; min-height: 44px; border: 0; outline: 0; background: transparent; color: var(--olive); font-size: .9rem; font-weight: 400; }
+.portion-field > span { font-size: .76rem; color: var(--ink-muted); }
+.portion-editor > small { display: block; color: #a04432; font-size: .7rem; margin-top: 5px; }
+@media (max-width: 640px) { .portion-editor { min-width: 100px; max-width: 130px; } .portion-field input { width: 52px; font-size: 16px; } }
