@@ -613,7 +613,9 @@ function AccountHome({
         )}
         <section
           className={
-            'scanner-card ' + (status !== 'idle' ? 'scanner-active' : '')
+            'scanner-card ' +
+            (status !== 'idle' ? 'scanner-active' : '') +
+            (status === 'loading' ? ' scanner-processing' : '')
           }
           aria-labelledby="scanner-title"
         >

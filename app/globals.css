@@ -3051,3 +3051,110 @@ b {
     margin-left: 0;
   }
 }
+
+/* Compact, steady analysis feedback with no simulated completion percentage. */
+.scanner-processing .review-copy > .step-label,
+.scanner-processing .review-copy > p {
+  display: none;
+}
+.scanner-processing .review-copy h2 {
+  font-size: 1.5rem;
+  margin-bottom: 18px;
+}
+.scanner-processing .meal-processing {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px 12px;
+  padding: 0;
+  align-items: center;
+}
+.scanner-processing .processing-orbit {
+  width: 30px;
+  height: 30px;
+  margin: 0;
+}
+.scanner-processing .processing-orbit > span {
+  inset: -3px;
+  border-width: 1.5px;
+}
+.scanner-processing .processing-status {
+  font-size: 0.84rem;
+}
+.scanner-processing .processing-tip {
+  grid-column: 2;
+  min-height: 40px;
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.6;
+  animation: processing-tip-in 0.35s ease-out;
+}
+.scanner-processing .processing-metrics {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.scanner-processing .processing-metrics > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+.scanner-processing .processing-metrics i {
+  width: 7px;
+  height: 7px;
+  margin: 0;
+  border-radius: 50%;
+  background: var(--olive-soft);
+  animation: processing-dot 1.8s ease-in-out infinite;
+}
+.scanner-processing .processing-metrics > div:nth-child(2) i {
+  animation-delay: 0.3s;
+}
+.scanner-processing .processing-metrics > div:nth-child(3) i {
+  animation-delay: 0.6s;
+}
+@keyframes processing-dot {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+    background: var(--ink-muted);
+  }
+}
+@keyframes processing-tip-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 640px) {
+  .scanner-processing .photo-review-grid {
+    display: block;
+    height: 145px;
+  }
+  .scanner-processing .photo-review-grid .review-photo-main {
+    height: 145px;
+  }
+  .scanner-processing .review-photo:not(.review-photo-main),
+  .scanner-processing .photo-number {
+    display: none;
+  }
+  .scanner-processing .review-copy {
+    padding: 18px 8px 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scanner-processing .processing-tip,
+  .scanner-processing .processing-metrics i {
+    animation: none;
+  }
+}
