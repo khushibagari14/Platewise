@@ -125,3 +125,53 @@ it('retains a meal and retry queue when deployment storage is not configured', a
   ).toBeNull();
   expect(screen.getByRole('button', { name: 'Retry sync' })).toBeTruthy();
 });
+
+it('replaces rejected meal photos on the next upload, then allows extra angles again', async () => {
+  const submittedCounts: number[] = [];
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (url === '/api/analyze-meal') {
+        submittedCounts.push((init!.body as FormData).getAll('images').length);
+        return Promise.resolve(
+          Response.json(
+            {
+              code: 'food_not_detected',
+              error: 'We could not find food in that photo.',
+            },
+            { status: 422 },
+          ),
+        );
+      }
+      return Promise.resolve(Response.json({ meals: [] }));
+    }),
+  );
+  const view = render(<Home />);
+  const upload = (name: string) =>
+    fireEvent.change(view.container.querySelector('input[type=file]')!, {
+      target: { files: [new File(['image'], name, { type: 'image/jpeg' })] },
+    });
+  upload('first.jpg');
+  await waitFor(() =>
+    expect(view.container.querySelectorAll('.review-photo')).toHaveLength(1),
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Analyze meal' }));
+  await waitFor(() =>
+    expect(
+      screen.getByText('We could not find food in that photo.'),
+    ).toBeTruthy(),
+  );
+  upload('replacement.jpg');
+  await waitFor(() =>
+    expect(
+      screen.queryByText('We could not find food in that photo.'),
+    ).toBeNull(),
+  );
+  expect(view.container.querySelectorAll('.review-photo')).toHaveLength(1);
+  upload('another-angle.jpg');
+  await waitFor(() =>
+    expect(view.container.querySelectorAll('.review-photo')).toHaveLength(2),
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Analyze meal' }));
+  await waitFor(() => expect(submittedCounts).toEqual([1, 2]));
+});

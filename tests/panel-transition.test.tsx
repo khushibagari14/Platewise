@@ -5,7 +5,7 @@ afterEach(() => {
   cleanup();
   vi.useRealTimers();
 });
-it('keeps the panel inert while closing and cancels removal when reopened', () => {
+it('keeps the panel inert while closing and cancels removal when reopened', async () => {
   vi.useFakeTimers();
   const view = render(
     <PanelTransition open>
@@ -18,13 +18,13 @@ it('keeps the panel inert while closing and cancels removal when reopened', () =
     </PanelTransition>,
   );
   expect(view.container.querySelector('[inert]')).toBeTruthy();
-  act(() => vi.advanceTimersByTime(100));
+  await act(() => vi.advanceTimersByTime(100));
   view.rerender(
     <PanelTransition open>
       <aside>History</aside>
     </PanelTransition>,
   );
-  act(() => vi.advanceTimersByTime(200));
+  await act(() => vi.advanceTimersByTime(200));
   expect(view.container.querySelector('aside')).toBeTruthy();
   expect(view.container.querySelector('[inert]')).toBeNull();
   view.rerender(
@@ -32,6 +32,6 @@ it('keeps the panel inert while closing and cancels removal when reopened', () =
       <aside>History</aside>
     </PanelTransition>,
   );
-  act(() => vi.advanceTimersByTime(180));
+  await act(() => vi.advanceTimersByTime(180));
   expect(view.container.querySelector('aside')).toBeNull();
 });

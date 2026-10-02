@@ -345,6 +345,7 @@ export async function POST(request: Request) {
     if (!text)
       return Response.json(
         {
+          code: 'food_not_detected',
           error:
             'We could not find food in that photo. Try a clearer picture of the whole meal.',
         },
@@ -354,6 +355,7 @@ export async function POST(request: Request) {
     if (!parsed?.items.length)
       return Response.json(
         {
+          code: 'food_not_detected',
           error:
             'We could not find food in that photo. Try a clearer picture of the whole meal.',
         },

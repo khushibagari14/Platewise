@@ -167,6 +167,7 @@ function AccountHome({
     initialPhotos.length ? 'ready' : 'idle',
   );
   const [error, setError] = useState('');
+  const [replaceRejectedPhotos, setReplaceRejectedPhotos] = useState(false);
   const [openDeleteId, setOpenDeleteId] = useState<string | null>(null);
   const [pendingMealDeleteId, setPendingMealDeleteId] = useState<string | null>(
     null,
@@ -377,9 +378,10 @@ function AccountHome({
     event.target.value = '';
     if (!files.length) return;
     setError('');
-    if (photos.length >= MAX_PHOTOS)
+    const keptPhotos = replaceRejectedPhotos ? [] : photos;
+    if (keptPhotos.length >= MAX_PHOTOS)
       return setError(`You can add up to ${MAX_PHOTOS} photos per meal.`);
-    const available = files.slice(0, MAX_PHOTOS - photos.length);
+    const available = files.slice(0, MAX_PHOTOS - keptPhotos.length);
     if (available.some((file) => !ALLOWED_TYPES.includes(file.type)))
       return setError('Please choose JPEG, PNG or WebP photos.');
     if (available.some((file) => file.size > MAX_FILE_SIZE))
@@ -391,10 +393,11 @@ function AccountHome({
         blob: photo.blob,
         preview: photo.preview,
       }));
-      const nextPhotos = [...photos, ...additions];
+      const nextPhotos = [...keptPhotos, ...additions];
+      setReplaceRejectedPhotos(false);
       setPhotos(nextPhotos);
       if (!userId) onGuestPhotosChange(nextPhotos);
-      if (!preview) setPreview(additions[0].preview);
+      if (!preview || replaceRejectedPhotos) setPreview(additions[0].preview);
       setAnalysis(null);
       setStatus('ready');
       if (files.length > available.length)
@@ -426,9 +429,15 @@ function AccountHome({
         body: form,
         headers: { 'X-Platewise-Account': userId || '' },
       });
-      const body = (await response.json()) as MealAnalysis & { error?: string };
-      if (!response.ok)
+      const body = (await response.json()) as MealAnalysis & {
+        error?: string;
+        code?: string;
+      };
+      if (!response.ok) {
+        if (body.code === 'food_not_detected') setReplaceRejectedPhotos(true);
         throw new Error(body.error || 'We could not analyze this meal.');
+      }
+      setReplaceRejectedPhotos(false);
       const next: MealAnalysis = body;
       const saved: SavedMeal = {
         ...next,
@@ -498,6 +507,7 @@ function AccountHome({
       if (!next.length) setStatus('idle');
       return;
     }
+    setReplaceRejectedPhotos(false);
     setPhotos([]);
     if (!userId) onGuestPhotosChange([]);
     setPreview('');
@@ -510,6 +520,7 @@ function AccountHome({
     setAnalysis(meal);
     setCurrentMealId(meal.id);
     setPreview(meal.thumbnail);
+    setReplaceRejectedPhotos(false);
     setPhotos([]);
     if (!userId) onGuestPhotosChange([]);
     setStatus('result');
