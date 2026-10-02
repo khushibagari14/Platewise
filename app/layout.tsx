@@ -9,12 +9,6 @@ export const metadata: Metadata = {
     'Photograph a meal and get a clear estimate of calories, protein, carbs, fat, and fiber.',
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <html lang="en">
-      <body>
-        {children}
-        <Analytics />
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -32,6 +26,7 @@ export default function RootLayout({
         >
           {children}
         </ClerkProvider>
+        <Analytics />
       </body>
     </html>
   );
