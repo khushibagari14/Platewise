@@ -1,6 +1,8 @@
 import { MealAnalysis, MealItem } from '@/lib/nutrition';
 import { auth } from '@clerk/nextjs/server';
 
+export const maxDuration = 60;
+
 const MAX_BYTES = 8 * 1024 * 1024;
 const MAX_IMAGES = 4;
 const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -14,10 +16,15 @@ async function generateWithRetry(
   model: string,
   apiKey: string,
   requestBody: string,
+  deadline: number,
 ): Promise<Response | null> {
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (Date.now() >= deadline) return null;
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 45_000);
+    const timeout = setTimeout(
+      () => controller.abort(),
+      Math.min(20_000, deadline - Date.now()),
+    );
     try {
       const response = await fetch(
         'https://generativelanguage.googleapis.com/v1beta/models/' +
@@ -36,12 +43,12 @@ async function generateWithRetry(
       if (
         response.ok ||
         !RETRYABLE_STATUSES.has(response.status) ||
-        attempt === 2
+        attempt === 1
       )
         return response;
       await response.body?.cancel();
     } catch (error) {
-      if (attempt === 2) {
+      if (attempt === 1) {
         console.warn('Gemini request failed', {
           model,
           reason: error instanceof Error ? error.name : 'Unknown error',
@@ -163,12 +170,12 @@ export async function POST(request: Request) {
         },
         { status: 429 },
       );
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
     if (!apiKey)
       return Response.json(
         {
           error:
-            'Meal analysis is not available right now. Please try again later.',
+            'Meal analysis is not configured yet. Please contact the app owner.',
         },
         { status: 503 },
       );
@@ -250,24 +257,34 @@ export async function POST(request: Request) {
             },
           },
         },
-        maxOutputTokens: 2048,
+        maxOutputTokens: 8192,
         temperature: 0.2,
       },
     });
+    const deadline = Date.now() + 55_000;
     const configuredModel = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
     const models = [
       ...new Set([configuredModel, 'gemini-3.5-flash', 'gemini-flash-latest']),
     ];
     let geminiResponse: Response | null = null;
     for (const model of models) {
-      geminiResponse = await generateWithRetry(model, apiKey, requestBody);
-      if (!geminiResponse) break;
+      geminiResponse = await generateWithRetry(
+        model,
+        apiKey,
+        requestBody,
+        deadline,
+      );
+      if (!geminiResponse) {
+        if (Date.now() >= deadline) break;
+        continue;
+      }
       if (geminiResponse.ok) break;
       console.warn('Gemini returned an unsuccessful response', {
         model,
         status: geminiResponse.status,
       });
-      if (![404, 501].includes(geminiResponse.status)) break;
+      if (![404, 429, 500, 501, 502, 503, 504].includes(geminiResponse.status))
+        break;
       await geminiResponse.body?.cancel();
     }
     if (!geminiResponse)
@@ -279,6 +296,14 @@ export async function POST(request: Request) {
         { status: 503 },
       );
     if (!geminiResponse.ok) {
+      if ([401, 403].includes(geminiResponse.status))
+        return Response.json(
+          {
+            error:
+              'The meal analysis service needs a configuration update. Please contact the app owner.',
+          },
+          { status: 503 },
+        );
       if (geminiResponse.status === 429)
         return Response.json(
           {
