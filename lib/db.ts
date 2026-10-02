@@ -3,6 +3,11 @@ import type { SavedMeal } from '@/lib/nutrition';
 import type { NutritionProfile } from '@/lib/database-validation';
 
 export class DatabaseUnavailable extends Error {}
+export class DatabaseRequestError extends Error {
+  constructor(public readonly status: number) {
+    super('Database request failed.');
+  }
+}
 
 // Only pass an account ID obtained from server-side Clerk auth().
 export function database(userId: string) {
@@ -43,12 +48,16 @@ export function database(userId: string) {
       cache: 'no-store',
       signal: AbortSignal.timeout(15_000),
     });
-    if (!response.ok) throw new Error('Database request failed.');
+    if (!response.ok) throw new DatabaseRequestError(response.status);
     const body = await response.text();
     return (body ? JSON.parse(body) : undefined) as T;
   }
 
   return {
+    async checkConnection() {
+      // A zero-row query checks runtime credentials and schema without reading meals.
+      await query('platewise_meals', { select: 'id', limit: '0' });
+    },
     async meals(): Promise<SavedMeal[]> {
       const meals: SavedMeal[] = [];
       // Read every page so older history is not silently dropped.
