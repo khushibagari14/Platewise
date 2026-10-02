@@ -81,3 +81,47 @@ it('keeps processing feedback visible until the estimate arrives, then shows res
   expect(view.container.querySelector('.meal-processing')).toBeNull();
   expect(screen.getByRole('button', { name: 'Scan another' })).toBeTruthy();
 });
+
+it('retains a meal and retry queue when deployment storage is not configured', async () => {
+  const configurationError = 'Account storage is not configured on this site.';
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (url === '/api/analyze-meal')
+        return Promise.resolve(Response.json(meal));
+      if (url.startsWith('data:'))
+        return Promise.resolve(new Response(new Blob(['image'])));
+      if (init?.method === 'POST')
+        return Promise.resolve(
+          Response.json({ error: configurationError }, { status: 503 }),
+        );
+      return Promise.resolve(Response.json({ meals: [] }));
+    }),
+  );
+  const view = render(<Home />);
+  fireEvent.change(view.container.querySelector('input[type=file]')!, {
+    target: {
+      files: [new File(['image'], 'meal.jpg', { type: 'image/jpeg' })],
+    },
+  });
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Analyze meal' })).toBeTruthy(),
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Analyze meal' }));
+  await waitFor(() =>
+    expect(
+      screen.getByText('Saved on this device. Account sync needs attention.'),
+    ).toBeTruthy(),
+  );
+  expect(screen.getByText(configurationError)).toBeTruthy();
+  expect(
+    localStorage.getItem('platewise:recent-meals:analysis_test'),
+  ).toContain(meal.title);
+  expect(
+    JSON.parse(localStorage.getItem('platewise:meal-sync:analysis_test')!),
+  ).toHaveLength(1);
+  expect(
+    screen.queryByText('Saved to your account · available across devices'),
+  ).toBeNull();
+  expect(screen.getByRole('button', { name: 'Retry sync' })).toBeTruthy();
+});

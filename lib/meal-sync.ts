@@ -1,5 +1,6 @@
 import { readQueue, writeQueue } from '@/lib/sync-storage';
 import type { SavedMeal } from '@/lib/nutrition';
+import { syncResponseError } from '@/lib/sync-error';
 
 type Operation =
   | { type: 'save'; meal: SavedMeal }
@@ -52,7 +53,8 @@ export function flushMealOperations(userId: string): Promise<void> {
               signal: AbortSignal.timeout(20_000),
             },
       );
-      if (!response.ok) throw new Error('Meal sync failed.');
+      if (!response.ok)
+        throw await syncResponseError(response, 'Meal sync failed.');
       const remaining = read(userId);
       remaining.shift();
       writeQueue(key(userId), JSON.stringify(remaining));

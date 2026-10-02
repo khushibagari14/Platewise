@@ -29,6 +29,7 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { AppTour } from './app-tour';
 import { MealProcessing } from './meal-processing';
+import { syncErrorMessage } from '@/lib/sync-error';
 import { restoreAccountHistory } from '@/lib/account-history';
 import { MealAnalysis, MealItem, SavedMeal, totalMeal } from '@/lib/nutrition';
 import { flushMealOperations, queueMealOperation } from '@/lib/meal-sync';
@@ -175,6 +176,7 @@ function AccountHome({
   const [historySyncError, setHistorySyncError] = useState('');
   const [restoringHistory, setRestoringHistory] = useState(Boolean(userId));
   const [syncNotice, setSyncNotice] = useState('');
+  const [savingMeals, setSavingMeals] = useState(0);
   useEffect(() => {
     if (userId) queueMicrotask(() => onGuestPhotosChange([]));
   }, [userId, onGuestPhotosChange]);
@@ -214,11 +216,8 @@ function AccountHome({
             'Cloud history is available, but this browser cannot keep an offline copy.',
           );
         }
-      } catch {
-        if (active)
-          setHistorySyncError(
-            'Cloud history is unavailable. Reconnect to sync this device.',
-          );
+      } catch (reason) {
+        if (active) setHistorySyncError(syncErrorMessage(reason));
       } finally {
         refreshing = false;
         if (active) setRestoringHistory(false);
@@ -271,14 +270,17 @@ function AccountHome({
 
   async function syncMeal(meal: SavedMeal) {
     if (!userId) return;
+    setSavingMeals((count) => count + 1);
     try {
       queueMealOperation(userId, { type: 'save', meal });
       await flushMealOperations(userId);
       setHistorySyncError('');
-    } catch {
-      setHistorySyncError(
-        'Cloud sync failed. This change is saved on this device only.',
-      );
+      setCloudHistory(true);
+      setSyncNotice('Saved to your account. Available on your other devices.');
+    } catch (reason) {
+      setHistorySyncError(syncErrorMessage(reason));
+    } finally {
+      setSavingMeals((count) => count - 1);
     }
   }
 
@@ -428,8 +430,6 @@ function AccountHome({
       if (!response.ok)
         throw new Error(body.error || 'We could not analyze this meal.');
       const next: MealAnalysis = body;
-      setAnalysis(next);
-      setStatus('result');
       const saved: SavedMeal = {
         ...next,
         id: crypto.randomUUID(),
@@ -442,6 +442,8 @@ function AccountHome({
       setHasUnseenHistory(true);
       saveHistoryLocal(nextHistory);
       void syncMeal(saved);
+      setAnalysis(next);
+      setStatus('result');
     } catch (reason) {
       setError(
         reason instanceof Error
@@ -767,6 +769,15 @@ function AccountHome({
           )}
           {status === 'result' && analysis && totals && (
             <div className="results">
+              <output className="meal-save-state">
+                {savingMeals
+                  ? 'Saving this meal to your account…'
+                  : historySyncError
+                    ? 'Saved on this device. Account sync needs attention.'
+                    : cloudHistory
+                      ? 'Saved to your account · available across devices'
+                      : 'Saved on this device'}
+              </output>
               <div className="result-top">
                 <div className="result-photo">
                   <Image
@@ -970,15 +981,17 @@ function AccountHome({
               <output>
                 {restoringHistory
                   ? 'Bringing your meals together…'
-                  : historySyncError
-                    ? 'Your meals are safe here. Sync is pending.'
-                    : syncNotice || 'Your meal history is up to date.'}
+                  : savingMeals
+                    ? 'Saving your meal to your account…'
+                    : historySyncError
+                      ? 'Your meals are safe here. Sync is pending.'
+                      : syncNotice || 'Your meal history is up to date.'}
               </output>
               <span>
                 {restoringHistory
                   ? 'Loading your account and saving meals from this browser.'
                   : historySyncError
-                    ? 'Keep this tab open. We’ll retry when you reconnect.'
+                    ? historySyncError
                     : 'Pick up where you left off, on any device.'}
               </span>
             </div>
@@ -1053,7 +1066,7 @@ function AccountHome({
             <div className="drawer-header">
               <div>
                 <span className="step-label">
-                  {cloudHistory
+                  {cloudHistory && !historySyncError && !savingMeals
                     ? 'Saved to your account'
                     : 'Saved on this device'}
                 </span>

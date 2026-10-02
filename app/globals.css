@@ -3020,3 +3020,11 @@ b {
     display: none;
   }
 }
+
+.meal-save-state {
+  display: block;
+  margin-bottom: 18px;
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}

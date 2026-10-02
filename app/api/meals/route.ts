@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { database, DatabaseUnavailable } from '@/lib/db';
+import { database, DatabaseUnavailable, DatabaseRequestError } from '@/lib/db';
 import { validateMeal } from '@/lib/database-validation';
 
 function failed(error: unknown) {
@@ -7,8 +7,11 @@ function failed(error: unknown) {
     {
       error:
         error instanceof DatabaseUnavailable
-          ? 'Cloud meal history is not configured.'
-          : 'Could not sync meals. Please try again.',
+          ? 'Account storage is not configured on this site. Meals will stay on this device until it is configured.'
+          : error instanceof DatabaseRequestError &&
+              [401, 403].includes(error.status)
+            ? 'Account storage credentials were rejected. Meals will stay on this device until the site configuration is corrected.'
+            : 'Could not sync meals. Please try again.',
     },
     { status: error instanceof DatabaseUnavailable ? 503 : 502 },
   );

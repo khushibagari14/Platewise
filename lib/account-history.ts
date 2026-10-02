@@ -1,6 +1,7 @@
 import { validateMeal } from '@/lib/database-validation';
 import { flushMealOperations, queueMealOperation } from '@/lib/meal-sync';
 import type { SavedMeal } from '@/lib/nutrition';
+import { syncResponseError } from '@/lib/sync-error';
 
 export const HISTORY_KEY = 'platewise:recent-meals';
 const CLAIM_KEY = 'platewise:browser-history-owner';
@@ -35,7 +36,8 @@ async function load(userId: string) {
     headers: { 'X-Platewise-Account': userId },
     signal: AbortSignal.timeout(20_000),
   });
-  if (!response.ok) throw new Error('History is unavailable.');
+  if (!response.ok)
+    throw await syncResponseError(response, 'History is unavailable.');
   const body = (await response.json()) as { meals?: unknown };
   if (!Array.isArray(body.meals)) throw new Error('Invalid history response.');
   return body.meals
@@ -59,7 +61,10 @@ export function restoreAccountHistory(userId: string) {
       try {
         for (let index = 0; index < localStorage.length; index++) {
           const key = localStorage.key(index);
-          if (key?.startsWith('platewise:legacy-imported:') && storedValue(key) === '1') {
+          if (
+            key?.startsWith('platewise:legacy-imported:') &&
+            storedValue(key) === '1'
+          ) {
             owner = key.slice('platewise:legacy-imported:'.length);
             localStorage.setItem(CLAIM_KEY, owner);
             break;
@@ -94,7 +99,8 @@ export function restoreAccountHistory(userId: string) {
     if (candidates.length) meals = await load(userId);
     try {
       localStorage.setItem(migratedKey, '1');
-      if (guest.length || owner === userId) localStorage.setItem(guestDoneKey, '1');
+      if (guest.length || owner === userId)
+        localStorage.setItem(guestDoneKey, '1');
       localStorage.removeItem(`platewise:recovered-meals:${userId}`);
     } catch {}
     return { meals, imported: candidates.length };
