@@ -3197,3 +3197,39 @@ b {
 .portion-field > span { font-size: .76rem; color: var(--ink-muted); }
 .portion-editor > small { display: block; color: #a04432; font-size: .7rem; margin-top: 5px; }
 @media (max-width: 640px) { .portion-editor { min-width: 100px; max-width: 130px; } .portion-field input { width: 52px; font-size: 16px; } }
+
+/* A quiet, consistent rhythm when moving between screens and meal steps. */
+@keyframes screen-arrive {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes panel-arrive {
+  from { opacity: 0; transform: translateX(14px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes backdrop-arrive {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.page-transition { animation: backdrop-arrive 240ms ease-out both; }
+.step-transition { animation: screen-arrive 260ms cubic-bezier(.22, 1, .36, 1) both; }
+.tour-copy, .tour-art { animation: screen-arrive 220ms ease-out both; }
+.drawer-backdrop { animation: backdrop-arrive 180ms ease-out both; }
+.history-drawer { animation: panel-arrive 260ms cubic-bezier(.22, 1, .36, 1) both; }
+.calendar-grid { animation: screen-arrive 200ms ease-out both; }
+.primary-action, .secondary-action, .header-actions button, .history-button {
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-transition, .step-transition, .tour-copy, .tour-art, .drawer-backdrop, .history-drawer, .calendar-grid {
+    animation: none;
+  }
+  .primary-action, .secondary-action, .header-actions button, .history-button { transition: none; }
+}
+.panel-transition { display: contents; }
+.panel-transition[data-exiting] .drawer-backdrop { animation: backdrop-arrive 180ms ease-in reverse both; pointer-events: none; }
+.panel-transition[data-exiting] .history-drawer { animation: panel-arrive 180ms ease-in reverse both; }
+@media (prefers-reduced-motion: reduce) {
+  .panel-transition[data-exiting] .drawer-backdrop,
+  .panel-transition[data-exiting] .history-drawer { animation: none; }
+}

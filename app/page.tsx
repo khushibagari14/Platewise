@@ -26,6 +26,7 @@ import {
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { AppTour } from './app-tour';
+import { PanelTransition } from './panel-transition';
 import { PortionEditor } from './portion-editor';
 import { MealProcessing } from './meal-processing';
 import { syncErrorMessage } from '@/lib/sync-error';
@@ -611,8 +612,9 @@ function AccountHome({
           </section>
         )}
         <section
+          key={status}
           className={
-            'scanner-card ' +
+            'scanner-card step-transition ' +
             (status !== 'idle' ? 'scanner-active' : '') +
             (status === 'loading' ? ' scanner-processing' : '')
           }
@@ -1025,7 +1027,7 @@ function AccountHome({
         multiple
         onChange={pickPhoto}
       />
-      {showHistory && (
+      <PanelTransition open={showHistory}>
         <div
           className="drawer-backdrop"
           role="presentation"
@@ -1104,7 +1106,7 @@ function AccountHome({
                   ),
                 )}
               </div>
-              <div className="calendar-grid">
+              <div className="calendar-grid" key={calendarMonth.toISOString()}>
                 {calendarDays.map((day) => {
                   const key = dateKey(day);
                   const count = mealsByDate[key]?.length || 0;
@@ -1240,7 +1242,7 @@ function AccountHome({
             )}
           </aside>
         </div>
-      )}
+      </PanelTransition>
     </main>
   );
 }

@@ -104,7 +104,7 @@ export function AppTour({
               Skip tour
             </button>
           </div>
-          <div className="tour-art" aria-hidden="true">
+          <div className="tour-art" key={step} aria-hidden="true">
             <div className="tour-orbit">
               <Icon size={38} strokeWidth={1.2} />
             </div>
