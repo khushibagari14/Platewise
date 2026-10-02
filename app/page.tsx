@@ -28,6 +28,7 @@ import {
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { AppTour } from './app-tour';
+import { MealProcessing } from './meal-processing';
 import { restoreAccountHistory } from '@/lib/account-history';
 import { MealAnalysis, MealItem, SavedMeal, totalMeal } from '@/lib/nutrition';
 import { flushMealOperations, queueMealOperation } from '@/lib/meal-sync';
@@ -586,65 +587,23 @@ function AccountHome({
         </button>
       </header>
       <div id="top" className="page-shell">
-        {userId && (
-          <div
-            className={`account-sync-banner ${historySyncError ? 'sync-pending' : ''}`}
-          >
-            <span className="account-sync-icon">
-              {restoringHistory ? (
-                <LoaderCircle className="spin" size={17} aria-hidden="true" />
-              ) : (
-                <ShieldCheck size={17} aria-hidden="true" />
-              )}
-            </span>
-            <div>
-              <output>
-                {restoringHistory
-                  ? 'Bringing your meals together…'
-                  : historySyncError
-                    ? 'Your meals are safe here. Sync is pending.'
-                    : syncNotice || 'Your meal history is up to date.'}
-              </output>
-              <span>
-                {restoringHistory
-                  ? 'Loading your account and saving meals from this browser.'
-                  : historySyncError
-                    ? 'Keep this tab open. We’ll retry when you reconnect.'
-                    : 'Pick up where you left off, on any device.'}
-              </span>
-            </div>
-            {historySyncError && (
-              <button
-                type="button"
-                disabled={restoringHistory}
-                onClick={() =>
-                  window.dispatchEvent(new Event('platewise:retry-history'))
-                }
-              >
-                Retry sync
-              </button>
-            )}
-          </div>
-        )}
-        {!userId && (
-          <p className="guest-account-note">
-            <ShieldCheck size={15} aria-hidden="true" /> Sign in to bring your
-            browser meals with you.
-          </p>
-        )}
         {status === 'idle' && (
           <section className="intro" aria-labelledby="page-title">
             <p className="eyebrow">
               <span /> Your everyday nutrition companion
             </p>
             <h1 id="page-title">
-              Know what’s on
-              <br />
+              Know what’s on <br />
               your plate.
             </h1>
             <p className="intro-copy">
-              Take a photo of your meal. We’ll estimate the calories, protein
-              and nutrients in a few moments.
+              <span className="intro-copy-desktop">
+                Take a photo of your meal. We’ll estimate the calories, protein
+                and nutrients in a few moments.
+              </span>
+              <span className="intro-copy-phone">
+                One photo. Calories, protein and more.
+              </span>
             </p>
           </section>
         )}
@@ -706,7 +665,9 @@ function AccountHome({
           {(status === 'ready' || status === 'loading') && (
             <div className="review-layout">
               <div className="photo-review">
-                <div className="photo-review-grid">
+                <div
+                  className={`photo-review-grid ${photos.length === 1 ? 'single-photo' : ''}`}
+                >
                   {photos.map((photo, index) => (
                     <div
                       className={
@@ -732,6 +693,9 @@ function AccountHome({
                         </button>
                       )}
                       <span className="photo-number">{index + 1}</span>
+                      {status === 'loading' && (
+                        <span className="scan-sweep" aria-hidden="true" />
+                      )}
                     </div>
                   ))}
                   {photos.length < MAX_PHOTOS && status !== 'loading' && (
@@ -752,19 +716,31 @@ function AccountHome({
                 </div>
               </div>
               <div className="review-copy">
-                <span className="step-label">02 · Review your photos</span>
+                <span className="step-label">
+                  {status === 'loading'
+                    ? 'Working on your estimate'
+                    : '02 · Your meal'}
+                </span>
                 <h2 id="scanner-title">
                   {status === 'loading'
                     ? 'Looking at your meal…'
                     : photos.length > 1
                       ? `${photos.length} views. One clear estimate.`
-                      : 'Good shot. Add another angle?'}
+                      : 'Ready to see what’s on your plate?'}
                 </h2>
                 <p>
                   {status === 'loading'
-                    ? 'We’re comparing every photo to identify foods and portions without counting the same item twice.'
-                    : 'Extra angles help reveal hidden ingredients and improve the portion estimate. Every photo is treated as one meal.'}
+                    ? 'Every photo is treated as one meal, so the same food is counted once.'
+                    : 'Tap Analyze meal for your estimate. Extra angles are optional.'}
                 </p>
+                {status === 'loading' ? (
+                  <MealProcessing />
+                ) : (
+                  <button className="analyze-button" onClick={analyzeMeal}>
+                    <Sparkles size={19} /> Analyze meal{' '}
+                    <ChevronRight size={18} />
+                  </button>
+                )}
                 {status !== 'loading' && photos.length < MAX_PHOTOS && (
                   <div className="add-more-actions">
                     <button
@@ -781,24 +757,6 @@ function AccountHome({
                     </button>
                   </div>
                 )}
-                <button
-                  className="analyze-button"
-                  onClick={analyzeMeal}
-                  disabled={status === 'loading'}
-                >
-                  {status === 'loading' ? (
-                    <>
-                      <LoaderCircle className="spin" size={20} /> Analyzing{' '}
-                      {photos.length} photo{photos.length === 1 ? '' : 's'}
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles size={19} /> Analyze {photos.length} photo
-                      {photos.length === 1 ? '' : 's'}{' '}
-                      <ChevronRight size={18} />
-                    </>
-                  )}
-                </button>
                 {status !== 'loading' && (
                   <button className="text-button" onClick={() => removePhoto()}>
                     <RotateCcw size={15} /> Start over
@@ -996,6 +954,52 @@ function AccountHome({
               <X size={17} />
             </button>
           </div>
+        )}
+        {userId && (
+          <div
+            className={`account-sync-banner ${historySyncError ? 'sync-pending' : ''}`}
+          >
+            <span className="account-sync-icon">
+              {restoringHistory ? (
+                <LoaderCircle className="spin" size={17} aria-hidden="true" />
+              ) : (
+                <ShieldCheck size={17} aria-hidden="true" />
+              )}
+            </span>
+            <div>
+              <output>
+                {restoringHistory
+                  ? 'Bringing your meals together…'
+                  : historySyncError
+                    ? 'Your meals are safe here. Sync is pending.'
+                    : syncNotice || 'Your meal history is up to date.'}
+              </output>
+              <span>
+                {restoringHistory
+                  ? 'Loading your account and saving meals from this browser.'
+                  : historySyncError
+                    ? 'Keep this tab open. We’ll retry when you reconnect.'
+                    : 'Pick up where you left off, on any device.'}
+              </span>
+            </div>
+            {historySyncError && (
+              <button
+                type="button"
+                disabled={restoringHistory}
+                onClick={() =>
+                  window.dispatchEvent(new Event('platewise:retry-history'))
+                }
+              >
+                Retry sync
+              </button>
+            )}
+          </div>
+        )}
+        {!userId && (
+          <p className="guest-account-note">
+            <ShieldCheck size={15} aria-hidden="true" /> Sign in to bring your
+            browser meals with you.
+          </p>
         )}
         <section
           className="trust-row"

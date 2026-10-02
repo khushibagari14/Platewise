@@ -2532,7 +2532,7 @@ b {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin: -12px 0 28px;
+  margin: 20px 0 0;
   color: var(--ink-muted);
   font-size: 0.8rem;
   line-height: 1.6;
@@ -2546,7 +2546,7 @@ b {
   background: rgba(255, 253, 248, 0.8);
   border-radius: 16px;
   padding: 15px 18px;
-  margin: -8px auto 32px;
+  margin: 20px auto 0;
   max-width: 680px;
 }
 .account-sync-icon {
@@ -2784,5 +2784,239 @@ b {
   }
   .tour-bottom {
     margin-top: 20px;
+  }
+}
+
+/* Keep the meal action at the front of the phone experience. */
+.intro-copy-phone {
+  display: none;
+}
+.meal-processing {
+  padding: 22px 0 4px;
+}
+.processing-orbit {
+  width: 54px;
+  height: 54px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  position: relative;
+  margin-bottom: 16px;
+  color: var(--olive);
+  background: var(--olive-soft);
+}
+.processing-orbit > span {
+  position: absolute;
+  inset: -5px;
+  border: 2px solid transparent;
+  border-top-color: var(--olive);
+  border-radius: 50%;
+  animation: meal-orbit 2.2s linear infinite;
+}
+.processing-status {
+  display: block;
+  color: var(--olive);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.meal-processing > p {
+  font-size: 0.82rem;
+  margin: 7px 0 18px;
+  color: var(--ink-muted);
+  line-height: 1.6;
+}
+.processing-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.processing-metrics > div {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+}
+.processing-metrics span {
+  font-size: 0.73rem;
+  color: var(--ink-muted);
+}
+.processing-metrics i {
+  display: block;
+  height: 12px;
+  margin-top: 10px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--olive-soft) 20%,
+    #fafbf6 50%,
+    var(--olive-soft) 80%
+  );
+  background-size: 200% 100%;
+  animation: meal-shimmer 2.4s ease-in-out infinite;
+}
+.scan-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.scan-sweep::after {
+  content: '';
+  position: absolute;
+  top: -25%;
+  left: 0;
+  right: 0;
+  height: 25%;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+  background: linear-gradient(transparent, rgba(235, 245, 218, 0.25));
+  animation: meal-scan 3.2s ease-in-out infinite;
+}
+@keyframes meal-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes meal-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+@keyframes meal-scan {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  90% {
+    transform: translateY(500%);
+    opacity: 0;
+  }
+}
+@media (max-width: 640px) {
+  .site-header {
+    padding: 12px 16px;
+    gap: 8px;
+  }
+  .page-shell {
+    padding-top: 14px;
+  }
+  .intro {
+    margin-bottom: 16px;
+  }
+  .intro .eyebrow,
+  .intro-copy-desktop {
+    display: none;
+  }
+  .intro h1 {
+    font-size: clamp(1.65rem, 8vw, 2.25rem);
+    line-height: 1.12;
+    max-width: 340px;
+    margin: 0 auto;
+  }
+  .intro h1 br {
+    display: none;
+  }
+  .intro-copy {
+    margin-top: 10px;
+    padding: 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  .intro-copy-phone {
+    display: inline;
+  }
+  .scanner-copy {
+    display: none;
+  }
+  .photo-drop {
+    min-height: clamp(140px, 24svh, 208px);
+  }
+  .photo-overlay {
+    padding-top: 0;
+  }
+  .photo-overlay small {
+    display: none;
+  }
+  .camera-circle {
+    width: 46px;
+    height: 46px;
+    margin-bottom: 8px;
+  }
+  .photo-overlay strong {
+    font-size: 1rem;
+  }
+  .upload-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .upload-actions button {
+    min-height: 48px;
+    padding: 8px;
+    gap: 7px;
+    font-size: 0.8rem;
+    border-radius: 12px;
+    justify-content: center;
+  }
+  .upload-actions .primary-action svg:last-child {
+    display: none;
+  }
+  .guest-account-note {
+    font-size: 0.75rem;
+    margin-top: 16px;
+  }
+  .photo-review-grid.single-photo {
+    grid-template-rows: clamp(140px, 24svh, 210px);
+  }
+  .photo-review-grid.single-photo .review-photo-main {
+    height: clamp(140px, 24svh, 210px);
+  }
+  .photo-review-grid.single-photo .add-photo-tile {
+    display: none;
+  }
+  .review-copy {
+    padding: 20px 8px 10px;
+  }
+  .review-copy h2 {
+    font-size: 1.65rem;
+  }
+  .review-copy > p {
+    font-size: 0.85rem;
+    line-height: 1.55;
+  }
+  .add-more-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .add-more-actions button {
+    padding: 8px;
+    font-size: 0.75rem;
+    gap: 6px;
+  }
+  .meal-processing {
+    padding-top: 12px;
+  }
+  .processing-metrics > div {
+    padding: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .processing-orbit > span,
+  .processing-metrics i,
+  .scan-sweep::after {
+    animation: none;
+  }
+  .scan-sweep {
+    display: none;
   }
 }
