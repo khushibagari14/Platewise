@@ -3028,3 +3028,26 @@ b {
   font-size: 0.8rem;
   line-height: 1.5;
 }
+
+/* One capture action; the library remains a separate choice. */
+.scanner-card .upload-actions {
+  grid-template-columns: 1fr;
+}
+@media (max-width: 640px) {
+  .signed-in-header {
+    grid-template-columns: minmax(0, 1fr) 44px 44px;
+  }
+  .signed-in-header .header-actions {
+    grid-row: 1;
+    grid-column: 2;
+    width: 44px;
+    min-height: 44px;
+    justify-content: center;
+  }
+  .signed-in-header > .history-button {
+    grid-column: 3;
+  }
+  .signed-in-header .header-actions > .cl-rootBox {
+    margin-left: 0;
+  }
+}

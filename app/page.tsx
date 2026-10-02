@@ -548,7 +548,7 @@ function AccountHome({
 
   return (
     <main className="min-h-screen">
-      <header className="site-header">
+      <header className={`site-header ${isSignedIn ? 'signed-in-header' : ''}`}>
         <button
           className="brand"
           onClick={() => removePhoto()}
@@ -560,11 +560,13 @@ function AccountHome({
           <span>platewise</span>
         </button>
         <div className="header-actions">
-          <AppTour
-            signedIn={Boolean(isSignedIn)}
-            onSignIn={() => openSignIn()}
-            onSignUp={() => openSignUp()}
-          />
+          {!isSignedIn && (
+            <AppTour
+              signedIn={Boolean(isSignedIn)}
+              onSignIn={() => openSignIn()}
+              onSignUp={() => openSignUp()}
+            />
+          )}
           <Show when="signed-out">
             <SignInButton mode="modal">
               <button className="sign-in-button">Sign in</button>
@@ -649,12 +651,6 @@ function AccountHome({
                 </span>
               </button>
               <div className="upload-actions">
-                <button
-                  className="primary-action"
-                  onClick={() => cameraRef.current?.click()}
-                >
-                  <Camera size={19} /> Open camera <ChevronRight size={18} />
-                </button>
                 <button
                   className="secondary-action"
                   onClick={() => libraryRef.current?.click()}
