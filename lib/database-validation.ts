@@ -1,6 +1,6 @@
 import type { SavedMeal } from '@/lib/nutrition';
 
-type Profile = {
+export type NutritionProfile = {
   gender: 'female' | 'male' | 'other';
   age: number;
   height: number;
@@ -55,7 +55,7 @@ export function validateMeal(value: unknown): SavedMeal | null {
   return meal as SavedMeal;
 }
 
-export function validateProfile(value: unknown): Profile | null {
+export function validateProfile(value: unknown): NutritionProfile | null {
   if (!value || typeof value !== 'object') return null;
   const profile = value as Record<string, unknown>;
   if (
@@ -75,5 +75,5 @@ export function validateProfile(value: unknown): Profile | null {
     !['lose', 'maintain', 'gain'].includes(String(profile.goal))
   )
     return null;
-  return profile as Profile;
+  return profile as NutritionProfile;
 }

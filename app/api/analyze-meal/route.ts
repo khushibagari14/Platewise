@@ -1,4 +1,5 @@
 import { MealAnalysis, MealItem } from '@/lib/nutrition';
+import { auth } from '@clerk/nextjs/server';
 
 const MAX_BYTES = 8 * 1024 * 1024;
 const MAX_IMAGES = 4;
@@ -147,6 +148,14 @@ function parseModelJson(text: string): unknown {
 
 export async function POST(request: Request) {
   try {
+    const { userId } = await auth();
+    if (!userId)
+      return Response.json({ error: 'Sign in required.' }, { status: 401 });
+    if (request.headers.get('X-Platewise-Account') !== userId)
+      return Response.json(
+        { error: 'Account changed. Please retry.' },
+        { status: 409 },
+      );
     if (!checkRateLimit(request))
       return Response.json(
         {

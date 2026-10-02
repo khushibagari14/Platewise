@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
 
 :root {
   --cream: #f5f0e6;
@@ -39,7 +40,6 @@ body {
   color: var(--olive);
   background: var(--cream);
   font-family:
-    Inter,
     ui-sans-serif,
     system-ui,
     -apple-system,
@@ -77,7 +77,7 @@ label {
   gap: 9px;
   color: inherit;
   text-decoration: none;
-  font-weight: 750;
+  font-weight: 400;
   font-size: 1.16rem;
   letter-spacing: -0.03em;
 }
@@ -105,7 +105,7 @@ label {
   padding: 10px;
   min-height: 44px;
   cursor: pointer;
-  font-weight: 650;
+  font-weight: 400;
 }
 .history-button b {
   position: absolute;
@@ -128,7 +128,7 @@ label {
   padding: 0 15px;
   border-radius: 12px;
   cursor: pointer;
-  font-weight: 750;
+  font-weight: 400;
 }
 .sign-in-button {
   border: 1px solid var(--line);
@@ -169,7 +169,7 @@ label {
   gap: 9px;
   color: var(--tomato);
   font-size: 0.79rem;
-  font-weight: 800;
+  font-weight: 400;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -181,7 +181,7 @@ label {
 h1,
 h2 {
   font-family: Georgia, 'Times New Roman', serif;
-  font-weight: 530;
+  font-weight: 400;
   letter-spacing: -0.04em;
 }
 h1 {
@@ -214,7 +214,7 @@ h1 {
   display: block;
   color: var(--tomato);
   font-size: 0.77rem;
-  font-weight: 800;
+  font-weight: 400;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   margin-bottom: 8px;
@@ -317,7 +317,7 @@ h1 {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font-weight: 750;
+  font-weight: 400;
   cursor: pointer;
   position: relative;
 }
@@ -441,7 +441,7 @@ h1 {
   color: white;
   background: rgba(26, 40, 30, 0.68);
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 400;
   backdrop-filter: blur(8px);
 }
 .add-photo-tile {
@@ -517,7 +517,7 @@ h1 {
   gap: 7px;
   cursor: pointer;
   font-size: 0.82rem;
-  font-weight: 750;
+  font-weight: 400;
 }
 .add-more-actions button:hover {
   border-color: #8d9b8a;
@@ -535,7 +535,7 @@ h1 {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font-weight: 750;
+  font-weight: 400;
   cursor: pointer;
 }
 .analyze-button svg:last-child {
@@ -555,7 +555,7 @@ h1 {
   align-items: center;
   gap: 7px;
   cursor: pointer;
-  font-weight: 650;
+  font-weight: 400;
   font-size: 0.86rem;
 }
 .spin {
@@ -576,7 +576,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-weight: 650;
+  font-weight: 400;
 }
 .error-message span {
   flex: 1;
@@ -624,7 +624,7 @@ h1 {
   gap: 6px;
   margin: 8px 0 0;
   font-size: 0.76rem;
-  font-weight: 800;
+  font-weight: 400;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ink-muted);
@@ -650,7 +650,7 @@ h1 {
   gap: 8px;
   align-items: center;
   cursor: pointer;
-  font-weight: 700;
+  font-weight: 400;
 }
 .headline-metrics {
   display: grid;
@@ -675,7 +675,7 @@ h1 {
 }
 .calorie-block small,
 .protein-block small {
-  font-weight: 700;
+  font-weight: 400;
   opacity: 0.76;
 }
 .calorie-block strong {
@@ -683,7 +683,7 @@ h1 {
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 4rem;
   line-height: 0.9;
-  font-weight: 550;
+  font-weight: 400;
 }
 .calorie-block span {
   margin-top: 8px;
@@ -732,7 +732,7 @@ h1 {
 .macro-grid span {
   color: var(--ink-muted);
   font-size: 0.83rem;
-  font-weight: 700;
+  font-weight: 400;
 }
 .macro-grid strong {
   font-family: Georgia, 'Times New Roman', serif;
@@ -791,7 +791,7 @@ h1 {
   gap: 5px;
   cursor: pointer;
   font-size: 0.73rem;
-  font-weight: 750;
+  font-weight: 400;
 }
 .desktop-delete-food {
   width: 38px;
@@ -839,7 +839,7 @@ h1 {
   border-radius: 5px;
   background: transparent;
   color: var(--olive);
-  font-weight: 750;
+  font-weight: 400;
   font-size: 1rem;
 }
 .food-main input:focus {
@@ -883,7 +883,7 @@ h1 {
   min-width: 42px;
   text-align: center;
   font-size: 0.8rem;
-  font-weight: 800;
+  font-weight: 400;
 }
 .notes {
   display: flex;
@@ -954,7 +954,7 @@ h1 {
   background: var(--olive);
   font: inherit;
   font-size: 0.78rem;
-  font-weight: 750;
+  font-weight: 400;
   cursor: pointer;
 }
 .history-import-card button:disabled {
@@ -1049,7 +1049,7 @@ h1 {
   text-align: center;
   color: var(--ink-muted);
   font-size: clamp(0.58rem, 2.4vw, 0.7rem);
-  font-weight: 750;
+  font-weight: 400;
   letter-spacing: -0.02em;
 }
 .calendar-grid button {
@@ -1084,7 +1084,7 @@ h1 {
 .calendar-grid button.selected {
   color: white;
   background: var(--olive);
-  font-weight: 800;
+  font-weight: 400;
 }
 .calendar-grid button i {
   position: absolute;
@@ -1101,7 +1101,7 @@ h1 {
   place-items: center;
   font-size: 0.58rem;
   font-style: normal;
-  font-weight: 800;
+  font-weight: 400;
 }
 .day-summary {
   margin-top: 24px;
@@ -1164,7 +1164,7 @@ h1 {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-weight: 750;
+  font-weight: 400;
   cursor: pointer;
 }
 .nutrition-edit svg {
@@ -1218,7 +1218,7 @@ h1 {
   padding: 0;
   color: var(--olive);
   font-size: 0.8rem;
-  font-weight: 750;
+  font-weight: 400;
 }
 .height-unit-switch {
   display: inline-flex;
@@ -1237,7 +1237,7 @@ h1 {
   background: transparent;
   font: inherit;
   font-size: 0.72rem;
-  font-weight: 750;
+  font-weight: 400;
   cursor: pointer;
 }
 .height-unit-switch button.active {
@@ -1259,7 +1259,7 @@ h1 {
   margin-bottom: 6px;
   color: var(--olive);
   font-size: 0.8rem;
-  font-weight: 750;
+  font-weight: 400;
 }
 .nutrition-profile-form input,
 .nutrition-profile-form select {
@@ -1303,7 +1303,7 @@ h1 {
   border-radius: 13px;
   color: white;
   background: var(--olive);
-  font-weight: 800;
+  font-weight: 400;
   cursor: pointer;
 }
 .remaining-protein {
@@ -1374,11 +1374,11 @@ h1 {
 .daily-target-grid dd {
   margin: 3px 0 0;
   color: var(--olive);
-  font-weight: 850;
+  font-weight: 400;
 }
 .daily-target-grid dd small {
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: 400;
 }
 .protein-complete-toast {
   position: fixed;
@@ -1468,7 +1468,7 @@ h1 {
 }
 .day-total dd {
   margin: 2px 0 0;
-  font-weight: 800;
+  font-weight: 400;
   font-size: 0.9rem;
 }
 .empty-day {
@@ -1536,7 +1536,7 @@ h1 {
 .saved-meal-delete span {
   display: block;
   font-size: 0.62rem;
-  font-weight: 750;
+  font-weight: 400;
 }
 .saved-meal-delete.confirming {
   color: white;
@@ -1583,7 +1583,7 @@ h1 {
 .daily-protein-footer > span small {
   color: var(--tomato);
   font-size: 0.66rem;
-  font-weight: 800;
+  font-weight: 400;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1609,7 +1609,7 @@ h1 {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  font-weight: 700;
+  font-weight: 400;
 }
 button:focus-visible,
 input:focus-visible {
@@ -1633,7 +1633,7 @@ input:focus-visible {
   gap: 8px;
   color: var(--olive);
   font-size: 0.9rem;
-  font-weight: 750;
+  font-weight: 400;
   text-decoration: none;
 }
 .profile-back:hover {
@@ -1645,7 +1645,7 @@ input:focus-visible {
 .profile-heading > span {
   color: var(--tomato);
   font-size: 0.72rem;
-  font-weight: 850;
+  font-weight: 400;
   letter-spacing: 0.1em;
 }
 .profile-heading h1 {
@@ -1699,7 +1699,7 @@ input:focus-visible {
   align-items: center;
   gap: 7px;
   font-size: 0.76rem;
-  font-weight: 850;
+  font-weight: 400;
   letter-spacing: 0.1em;
 }
 .subscription-page-heading h1 {
@@ -1774,7 +1774,7 @@ input:focus-visible {
 .account-plan-topline > span {
   color: var(--tomato);
   font-size: 0.72rem;
-  font-weight: 850;
+  font-weight: 400;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1836,7 +1836,7 @@ input:focus-visible {
   margin: 4px 0 0;
   color: var(--olive);
   font-size: 0.86rem;
-  font-weight: 750;
+  font-weight: 400;
   text-transform: capitalize;
 }
 .account-feature-list {
@@ -1855,7 +1855,7 @@ input:focus-visible {
   align-items: center;
   gap: 8px;
   font-size: 0.83rem;
-  font-weight: 700;
+  font-weight: 400;
 }
 .account-feature-list svg {
   color: var(--tomato);
@@ -1871,7 +1871,7 @@ input:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-weight: 800;
+  font-weight: 400;
   cursor: pointer;
 }
 .account-billing-action:disabled {
@@ -1909,7 +1909,7 @@ input:focus-visible {
   gap: 7px;
   color: var(--tomato);
   font-size: 0.72rem;
-  font-weight: 850;
+  font-weight: 400;
   letter-spacing: 0.09em;
 }
 .premium-hero h2 {
@@ -1974,7 +1974,7 @@ input:focus-visible {
 .premium-plan-copy > span {
   color: var(--tomato);
   font-size: 0.69rem;
-  font-weight: 850;
+  font-weight: 400;
   letter-spacing: 0.09em;
 }
 .premium-journey-title h3 {
@@ -2001,7 +2001,7 @@ input:focus-visible {
   place-items: center;
   color: white;
   background: var(--olive);
-  font-weight: 800;
+  font-weight: 400;
   font-size: 0.78rem;
 }
 .premium-journey strong {
@@ -2057,7 +2057,7 @@ input:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-weight: 800;
+  font-weight: 400;
   cursor: pointer;
   text-decoration: none;
 }
@@ -2072,7 +2072,7 @@ input:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-weight: 800;
+  font-weight: 400;
 }
 .billing-status,
 .billing-error {
@@ -2445,5 +2445,292 @@ input:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+}
+/* Quiet typography across the application, including shared controls. */
+body {
+  font-weight: 400;
+}
+h3,
+h4,
+h5,
+h6,
+strong,
+b {
+  font-weight: 400;
+}
+.font-bold,
+.font-semibold,
+.font-extrabold,
+.font-black {
+  font-weight: 400;
+}
+.cl-headerTitle,
+.cl-formButtonPrimary,
+.cl-userButtonPopoverActionButtonText,
+.cl-navbarButton {
+  font-weight: 400;
+}
+.scanner-card {
+  box-shadow: 0 12px 40px rgba(44, 55, 42, 0.045);
+}
+.tour-trigger {
+  border: 0;
+  background: transparent;
+  color: var(--ink-muted);
+  padding: 10px 8px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  min-height: 44px;
+  white-space: nowrap;
+}
+.guest-account-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: -12px 0 28px;
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  text-align: center;
+}
+.account-sync-banner {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border: 1px solid var(--line);
+  background: rgba(255, 253, 248, 0.8);
+  border-radius: 16px;
+  padding: 15px 18px;
+  margin: -8px auto 32px;
+  max-width: 680px;
+}
+.account-sync-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  color: var(--olive);
+  background: var(--olive-soft);
+  border-radius: 50%;
+}
+.account-sync-banner output {
+  display: block;
+  margin: 0 0 3px;
+  font-size: 0.86rem;
+  font-weight: 400;
+}
+.account-sync-banner span:not(.account-sync-icon) {
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+.account-sync-banner button {
+  margin-left: auto;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 9px 12px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.78rem;
+}
+.account-sync-banner.sync-pending .account-sync-icon {
+  background: #f0e8d9;
+}
+.dialog-centered {
+  transform: translate(-50%, -50%);
+}
+.tour-dialog[data-slot='dialog-content'] {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 60;
+  display: grid;
+  width: min(480px, calc(100vw - 32px));
+  max-width: 480px;
+  padding: 26px;
+  gap: 0;
+  border-radius: 24px;
+  background: var(--paper);
+  box-shadow: 0 25px 90px rgba(25, 40, 30, 0.14);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--line);
+  outline: none;
+}
+.tour-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+}
+.tour-topline span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.tour-topline button,
+.tour-back,
+.tour-login {
+  background: transparent;
+  border: 0;
+  color: var(--ink-muted);
+  cursor: pointer;
+  font-size: 0.78rem;
+  min-height: 44px;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.tour-art {
+  height: 182px;
+  background: linear-gradient(135deg, #e8eddf, #f1f2e9);
+  border-radius: 18px;
+  margin: 18px 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+.tour-orbit {
+  width: 80px;
+  height: 80px;
+  border: 1px solid rgba(36, 54, 40, 0.16);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 253, 248, 0.65);
+  color: var(--olive);
+}
+.tour-art > span {
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+.tour-kicker {
+  color: var(--ink-muted);
+  font-size: 0.7rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+}
+.tour-dialog .tour-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.7rem, 6vw, 2rem);
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+  font-weight: 400;
+  margin: 0 0 14px;
+}
+.tour-description {
+  color: var(--olive);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+.tour-detail {
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  line-height: 1.65;
+  margin: 14px 0 0;
+  min-height: 40px;
+}
+.tour-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 26px;
+}
+.tour-progress {
+  display: flex;
+  gap: 5px;
+}
+.tour-progress span {
+  width: 6px;
+  height: 6px;
+  background: var(--line);
+  border-radius: 999px;
+  transition: width 0.2s;
+}
+.tour-progress span.active {
+  width: 22px;
+  background: var(--olive);
+}
+.tour-navigation {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tour-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--olive);
+  color: var(--paper);
+  border: 1px solid var(--olive);
+  border-radius: 11px;
+  padding: 12px 16px;
+  min-height: 44px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+.tour-login {
+  width: 100%;
+  text-align: center;
+  margin: 10px 0 -8px;
+}
+.tour-trigger:focus-visible,
+.tour-dialog button:focus-visible,
+.account-sync-banner button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .site-header {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px 18px;
+  }
+  .header-actions {
+    flex-wrap: wrap;
+    gap: 3px;
+    justify-content: flex-end;
+  }
+  .tour-trigger {
+    font-size: 0.72rem;
+    padding: 8px 5px;
+  }
+  .account-sync-banner {
+    align-items: flex-start;
+    padding: 13px;
+    gap: 9px;
+  }
+  .account-sync-banner button {
+    padding: 8px;
+  }
+  .tour-dialog[data-slot='dialog-content'] {
+    padding: 22px;
+  }
+  .tour-art {
+    height: 150px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .tour-progress span {
+    transition: none;
+  }
+  .spin {
+    animation: none;
   }
 }

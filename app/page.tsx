@@ -27,17 +27,18 @@ import {
 } from 'lucide-react';
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { AppTour } from './app-tour';
+import { restoreAccountHistory } from '@/lib/account-history';
 import { MealAnalysis, MealItem, SavedMeal, totalMeal } from '@/lib/nutrition';
 import { flushMealOperations, queueMealOperation } from '@/lib/meal-sync';
-import { DailyNutritionCalculator } from './daily-nutrition-calculator';
+import { validateMeal } from '@/lib/database-validation';
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const MAX_PHOTOS = 4;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const STORAGE_KEY = 'platewise:recent-meals';
 const HISTORY_SEEN_KEY = 'platewise:history-seen-at';
-const POST_SIGNUP_SUBSCRIPTION_KEY = 'platewise:open-subscription-after-signup';
+type Photo = { id: string; blob: Blob; preview: string };
 
 declare global {
   interface Document {
@@ -54,9 +55,35 @@ function historyKey(userId?: string | null) {
   return userId ? `${STORAGE_KEY}:${userId}` : STORAGE_KEY;
 }
 
+function storageValue(key: string) {
+  try {
+    return localStorage.getItem(key) || '';
+  } catch {
+    return '';
+  }
+}
+
+async function mealThumbnail(preview: string) {
+  const bitmap = await createImageBitmap(await (await fetch(preview)).blob());
+  const scale = Math.min(1, 360 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  canvas.getContext('2d')?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  return canvas.toDataURL('image/jpeg', 0.65);
+}
+
 function readHistory(userId?: string | null): SavedMeal[] {
   try {
-    return JSON.parse(localStorage.getItem(historyKey(userId)) || '[]');
+    const value: unknown = JSON.parse(
+      localStorage.getItem(historyKey(userId)) || '[]',
+    );
+    return Array.isArray(value)
+      ? value
+          .map(validateMeal)
+          .filter((meal): meal is SavedMeal => meal !== null)
+      : [];
   } catch {
     return [];
   }
@@ -93,17 +120,38 @@ async function compressImage(
 }
 
 export default function Home() {
-  const router = useRouter();
+  const { isLoaded, userId } = useAuth();
+  const [guestPhotos, setGuestPhotos] = useState<Photo[]>([]);
+  if (!isLoaded)
+    return (
+      <main className="page-shell">
+        <p>Loading your account…</p>
+      </main>
+    );
+  return (
+    <AccountHome
+      key={userId || 'guest'}
+      initialPhotos={guestPhotos}
+      onGuestPhotosChange={setGuestPhotos}
+    />
+  );
+}
+
+function AccountHome({
+  initialPhotos,
+  onGuestPhotosChange,
+}: {
+  initialPhotos: Photo[];
+  onGuestPhotosChange: (photos: Photo[]) => void;
+}) {
   const { isLoaded, isSignedIn, userId } = useAuth();
-  const { openSignUp } = useClerk();
+  const { openSignUp, openSignIn } = useClerk();
   const cameraRef = useRef<HTMLInputElement>(null);
   const libraryRef = useRef<HTMLInputElement>(null);
   const swipeStartX = useRef<number | null>(null);
-  const pendingSubscriptionRedirect = useRef(false);
-  const [photos, setPhotos] = useState<
-    { id: string; blob: Blob; preview: string }[]
-  >([]);
-  const [preview, setPreview] = useState('');
+
+  const [photos, setPhotos] = useState<Photo[]>(initialPhotos);
+  const [preview, setPreview] = useState(initialPhotos[0]?.preview || '');
   const [analysis, setAnalysis] = useState<MealAnalysis | null>(null);
   const [currentMealId, setCurrentMealId] = useState<string | null>(null);
   const [history, setHistory] = useState<SavedMeal[]>([]);
@@ -114,7 +162,7 @@ export default function Home() {
   });
   const [selectedDate, setSelectedDate] = useState(() => dateKey(new Date()));
   const [status, setStatus] = useState<'idle' | 'ready' | 'loading' | 'result'>(
-    'idle',
+    initialPhotos.length ? 'ready' : 'idle',
   );
   const [error, setError] = useState('');
   const [openDeleteId, setOpenDeleteId] = useState<string | null>(null);
@@ -124,60 +172,100 @@ export default function Home() {
   const [hasUnseenHistory, setHasUnseenHistory] = useState(false);
   const [cloudHistory, setCloudHistory] = useState(false);
   const [historySyncError, setHistorySyncError] = useState('');
-  const [legacyMealCount, setLegacyMealCount] = useState(0);
-  const [importingMeals, setImportingMeals] = useState(false);
+  const [restoringHistory, setRestoringHistory] = useState(Boolean(userId));
+  const [syncNotice, setSyncNotice] = useState('');
+  useEffect(() => {
+    if (userId) queueMicrotask(() => onGuestPhotosChange([]));
+  }, [userId, onGuestPhotosChange]);
+  const historyRevision = useRef(0);
 
   useEffect(() => {
     if (!isLoaded) return;
     let active = true;
+    let refreshing = false;
+
+    async function refresh() {
+      if (!userId || !active || refreshing) return;
+      refreshing = true;
+      const revision = historyRevision.current;
+      try {
+        const { meals, imported } = await restoreAccountHistory(userId);
+        if (!active || revision !== historyRevision.current) return;
+        if (imported)
+          setSyncNotice(
+            imported === 1
+              ? 'Your browser meal is now in your account.'
+              : `${imported} browser meals are now in your account.`,
+          );
+        setCloudHistory(true);
+        setHistory(meals);
+        setHasUnseenHistory(
+          Boolean(
+            meals[0] &&
+            meals[0].createdAt > storageValue(`${HISTORY_SEEN_KEY}:${userId}`),
+          ),
+        );
+        setHistorySyncError('');
+        try {
+          localStorage.setItem(historyKey(userId), JSON.stringify(meals));
+        } catch {
+          setHistorySyncError(
+            'Cloud history is available, but this browser cannot keep an offline copy.',
+          );
+        }
+      } catch {
+        if (active)
+          setHistorySyncError(
+            'Cloud history is unavailable. Reconnect to sync this device.',
+          );
+      } finally {
+        refreshing = false;
+        if (active) setRestoringHistory(false);
+      }
+    }
     queueMicrotask(async () => {
       const saved = readHistory(userId);
-      const seenAt = localStorage.getItem(HISTORY_SEEN_KEY) || '';
+      const seenAt = storageValue(`${HISTORY_SEEN_KEY}:${userId || 'guest'}`);
       if (!active) return;
       setHistory(saved);
       setHasUnseenHistory(Boolean(saved[0] && saved[0].createdAt > seenAt));
       setCloudHistory(false);
-      setLegacyMealCount(
-        userId && !localStorage.getItem(`platewise:legacy-imported:${userId}`)
-          ? readHistory().length
-          : 0,
-      );
-      if (!userId) return;
-      try {
-        await flushMealOperations(userId);
-        const response = await fetch('/api/meals', { cache: 'no-store' });
-        if (!response.ok) {
-          if (response.status !== 503)
-            setHistorySyncError(
-              'Cloud history is temporarily unavailable. Changes are saved on this device.',
-            );
-          return;
-        }
-        const body = (await response.json()) as { meals?: SavedMeal[] };
-        if (!active || !Array.isArray(body.meals)) return;
-        setCloudHistory(true);
-        setHistory(body.meals);
-        localStorage.setItem(historyKey(userId), JSON.stringify(body.meals));
-        setHasUnseenHistory(
-          Boolean(body.meals[0] && body.meals[0].createdAt > seenAt),
-        );
-        setHistorySyncError('');
-      } catch {
-        if (active)
-          setHistorySyncError(
-            'Cloud history is temporarily unavailable. Changes are saved on this device.',
-          );
-      }
+
+      await refresh();
     });
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void refresh();
+    };
+    const retry = () => {
+      if (!refreshing) {
+        setRestoringHistory(true);
+        void refresh();
+      }
+    };
+    window.addEventListener('platewise:retry-history', retry);
+    window.addEventListener('online', refresh);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', onVisible);
+    const timer = window.setInterval(onVisible, 30_000);
     return () => {
       active = false;
+      window.removeEventListener('platewise:retry-history', retry);
+      window.removeEventListener('online', refresh);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.clearInterval(timer);
     };
   }, [isLoaded, userId]);
 
   function saveHistoryLocal(meals: SavedMeal[]) {
+    historyRevision.current++;
     try {
       localStorage.setItem(historyKey(userId), JSON.stringify(meals));
-    } catch {}
+    } catch {
+      setHistorySyncError(
+        'This browser could not save an offline copy. Keep this tab open until cloud sync finishes.',
+      );
+    }
   }
 
   async function syncMeal(meal: SavedMeal) {
@@ -209,31 +297,6 @@ export default function Home() {
     }
   }
 
-  async function importDeviceMeals() {
-    if (!userId || !cloudHistory || importingMeals) return;
-    setImportingMeals(true);
-    try {
-      const legacyMeals = readHistory();
-      for (const meal of legacyMeals) {
-        queueMealOperation(userId, { type: 'save', meal });
-        await flushMealOperations(userId);
-      }
-      const response = await fetch('/api/meals', { cache: 'no-store' });
-      if (!response.ok) throw new Error('Could not reload meals.');
-      const body = (await response.json()) as { meals: SavedMeal[] };
-      setHistory(body.meals);
-      saveHistoryLocal(body.meals);
-      localStorage.setItem(`platewise:legacy-imported:${userId}`, '1');
-      setLegacyMealCount(0);
-      setHistorySyncError('');
-    } catch {
-      setHistorySyncError(
-        'Could not import all device meals. Please try again.',
-      );
-    } finally {
-      setImportingMeals(false);
-    }
-  }
   useEffect(() => {
     const context = document.modelContext;
     if (!context?.registerTool) return;
@@ -325,7 +388,9 @@ export default function Home() {
         blob: photo.blob,
         preview: photo.preview,
       }));
-      setPhotos((current) => [...current, ...additions]);
+      const nextPhotos = [...photos, ...additions];
+      setPhotos(nextPhotos);
+      if (!userId) onGuestPhotosChange(nextPhotos);
       if (!preview) setPreview(additions[0].preview);
       setAnalysis(null);
       setStatus('ready');
@@ -341,11 +406,7 @@ export default function Home() {
   async function analyzeMeal() {
     if (!photos.length) return;
     if (!isSignedIn) {
-      pendingSubscriptionRedirect.current = true;
-      try {
-        sessionStorage.setItem(POST_SIGNUP_SUBSCRIPTION_KEY, '1');
-      } catch {}
-      if (isLoaded) openSignUp();
+      if (isLoaded) openSignIn();
       return;
     }
     if (!navigator.onLine)
@@ -360,6 +421,7 @@ export default function Home() {
       const response = await fetch('/api/analyze-meal', {
         method: 'POST',
         body: form,
+        headers: { 'X-Platewise-Account': userId || '' },
       });
       const body = (await response.json()) as MealAnalysis & { error?: string };
       if (!response.ok)
@@ -371,10 +433,10 @@ export default function Home() {
         ...next,
         id: crypto.randomUUID(),
         createdAt: new Date().toISOString(),
-        thumbnail: preview,
+        thumbnail: await mealThumbnail(preview),
       };
       setCurrentMealId(saved.id);
-      const nextHistory = [saved, ...history].slice(0, 180);
+      const nextHistory = [saved, ...history];
       setHistory(nextHistory);
       setHasUnseenHistory(true);
       saveHistoryLocal(nextHistory);
@@ -388,21 +450,6 @@ export default function Home() {
       setStatus('ready');
     }
   }
-
-  useEffect(() => {
-    if (!isLoaded || !isSignedIn) return;
-    let shouldOpenSubscription = pendingSubscriptionRedirect.current;
-    try {
-      shouldOpenSubscription ||=
-        sessionStorage.getItem(POST_SIGNUP_SUBSCRIPTION_KEY) === '1';
-    } catch {}
-    if (!shouldOpenSubscription) return;
-    pendingSubscriptionRedirect.current = false;
-    try {
-      sessionStorage.removeItem(POST_SIGNUP_SUBSCRIPTION_KEY);
-    } catch {}
-    router.push('/subscription');
-  }, [isLoaded, isSignedIn, router]);
 
   function updateItem(id: string, itemPatch: Partial<MealItem>) {
     if (!analysis) return;
@@ -441,15 +488,15 @@ export default function Home() {
   }
   function removePhoto(id?: string) {
     if (id) {
-      setPhotos((current) => {
-        const next = current.filter((photo) => photo.id !== id);
-        setPreview(next[0]?.preview || '');
-        if (!next.length) setStatus('idle');
-        return next;
-      });
+      const next = photos.filter((photo) => photo.id !== id);
+      setPhotos(next);
+      if (!userId) onGuestPhotosChange(next);
+      setPreview(next[0]?.preview || '');
+      if (!next.length) setStatus('idle');
       return;
     }
     setPhotos([]);
+    if (!userId) onGuestPhotosChange([]);
     setPreview('');
     setAnalysis(null);
     setCurrentMealId(null);
@@ -461,13 +508,16 @@ export default function Home() {
     setCurrentMealId(meal.id);
     setPreview(meal.thumbnail);
     setPhotos([]);
+    if (!userId) onGuestPhotosChange([]);
     setStatus('result');
     setShowHistory(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   function clearHistory() {
-    localStorage.removeItem(historyKey(userId));
-    localStorage.removeItem(HISTORY_SEEN_KEY);
+    saveHistoryLocal([]);
+    try {
+      localStorage.removeItem(`${HISTORY_SEEN_KEY}:${userId || 'guest'}`);
+    } catch {}
     setHistory([]);
     setHasUnseenHistory(false);
     void deleteCloudMeal();
@@ -486,7 +536,7 @@ export default function Home() {
     setHasUnseenHistory(false);
     try {
       localStorage.setItem(
-        HISTORY_SEEN_KEY,
+        `${HISTORY_SEEN_KEY}:${userId || 'guest'}`,
         history[0]?.createdAt || new Date().toISOString(),
       );
     } catch {}
@@ -507,12 +557,17 @@ export default function Home() {
           <span>platewise</span>
         </button>
         <div className="header-actions">
+          <AppTour
+            signedIn={Boolean(isSignedIn)}
+            onSignIn={() => openSignIn()}
+            onSignUp={() => openSignUp()}
+          />
           <Show when="signed-out">
             <SignInButton mode="modal">
               <button className="sign-in-button">Sign in</button>
             </SignInButton>
             <SignUpButton mode="modal">
-              <button className="sign-up-button">Sign up</button>
+              <button className="sign-up-button">Get started</button>
             </SignUpButton>
           </Show>
           <Show when="signed-in">
@@ -531,6 +586,52 @@ export default function Home() {
         </div>
       </header>
       <div id="top" className="page-shell">
+        {userId && (
+          <div
+            className={`account-sync-banner ${historySyncError ? 'sync-pending' : ''}`}
+          >
+            <span className="account-sync-icon">
+              {restoringHistory ? (
+                <LoaderCircle className="spin" size={17} aria-hidden="true" />
+              ) : (
+                <ShieldCheck size={17} aria-hidden="true" />
+              )}
+            </span>
+            <div>
+              <output>
+                {restoringHistory
+                  ? 'Bringing your meals together…'
+                  : historySyncError
+                    ? 'Your meals are safe here. Sync is pending.'
+                    : syncNotice || 'Your meal history is up to date.'}
+              </output>
+              <span>
+                {restoringHistory
+                  ? 'Loading your account and saving meals from this browser.'
+                  : historySyncError
+                    ? 'Keep this tab open. We’ll retry when you reconnect.'
+                    : 'Pick up where you left off, on any device.'}
+              </span>
+            </div>
+            {historySyncError && (
+              <button
+                type="button"
+                disabled={restoringHistory}
+                onClick={() =>
+                  window.dispatchEvent(new Event('platewise:retry-history'))
+                }
+              >
+                Retry sync
+              </button>
+            )}
+          </div>
+        )}
+        {!userId && (
+          <p className="guest-account-note">
+            <ShieldCheck size={15} aria-hidden="true" /> Sign in to bring your
+            browser meals with you.
+          </p>
+        )}
         {status === 'idle' && (
           <section className="intro" aria-labelledby="page-title">
             <p className="eyebrow">
@@ -962,28 +1063,7 @@ export default function Home() {
               </button>
             </div>
             {historySyncError ? (
-              <output className="history-sync-note">
-                {historySyncError}
-              </output>
-            ) : null}
-            {cloudHistory && legacyMealCount > 0 ? (
-              <div className="history-import-card">
-                <strong>
-                  {legacyMealCount} older{' '}
-                  {legacyMealCount === 1 ? 'meal' : 'meals'} on this browser
-                </strong>
-                <p>
-                  These were saved before cloud history. Import them only if
-                  they belong to your account.
-                </p>
-                <button
-                  type="button"
-                  disabled={importingMeals}
-                  onClick={() => void importDeviceMeals()}
-                >
-                  {importingMeals ? 'Importing…' : 'Import device meals'}
-                </button>
-              </div>
+              <output className="history-sync-note">{historySyncError}</output>
             ) : null}
             <section
               className="calendar-card"
@@ -1079,10 +1159,6 @@ export default function Home() {
                   {selectedMeals.length === 1 ? '' : 's'}
                 </span>
               </div>
-              <DailyNutritionCalculator
-                consumed={selectedTotals}
-                selectedDate={selectedDate}
-              />
               {selectedMeals.length > 0 ? (
                 <>
                   <div className="day-total">

@@ -1,3 +1,4 @@
+import { readQueue, writeQueue } from '@/lib/sync-storage';
 import type { SavedMeal } from '@/lib/nutrition';
 
 type Operation =
@@ -10,7 +11,7 @@ const pending = new Map<string, Promise<void>>();
 
 function read(userId: string): Operation[] {
   try {
-    const value = JSON.parse(localStorage.getItem(key(userId)) || '[]');
+    const value = JSON.parse(readQueue(key(userId)) || '[]');
     return Array.isArray(value) ? value : [];
   } catch {
     return [];
@@ -20,13 +21,13 @@ function read(userId: string): Operation[] {
 export function queueMealOperation(userId: string, operation: Operation) {
   const operations = read(userId);
   operations.push(operation);
-  localStorage.setItem(key(userId), JSON.stringify(operations));
+  writeQueue(key(userId), JSON.stringify(operations));
 }
 
 export function flushMealOperations(userId: string): Promise<void> {
   const running = pending.get(userId);
   if (running) return running;
-  const task = (async () => {
+  const taskBody = async () => {
     while (read(userId).length) {
       const operation = read(userId)[0];
       const response = await fetch(
@@ -38,16 +39,28 @@ export function flushMealOperations(userId: string): Promise<void> {
         operation.type === 'save'
           ? {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              signal: AbortSignal.timeout(20_000),
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Platewise-Account': userId,
+              },
               body: JSON.stringify(operation.meal),
             }
-          : { method: 'DELETE' },
+          : {
+              method: 'DELETE',
+              headers: { 'X-Platewise-Account': userId },
+              signal: AbortSignal.timeout(20_000),
+            },
       );
       if (!response.ok) throw new Error('Meal sync failed.');
       const remaining = read(userId);
       remaining.shift();
-      localStorage.setItem(key(userId), JSON.stringify(remaining));
+      writeQueue(key(userId), JSON.stringify(remaining));
     }
+  };
+  const task = (async () => {
+    if (navigator.locks) await navigator.locks.request(key(userId), taskBody);
+    else await taskBody();
   })();
   pending.set(userId, task);
   void task.finally(() => pending.delete(userId)).catch(() => undefined);

@@ -5,6 +5,8 @@ import { CheckCircle2, ChevronDown, Target, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { SyntheticEvent } from 'react';
 import type { Nutrients } from '@/lib/nutrition';
+import { validateProfile } from '@/lib/database-validation';
+import { flushProfile, queueProfile } from '@/lib/profile-sync';
 
 type Profile = {
   gender: '' | 'female' | 'male' | 'other';
@@ -76,6 +78,8 @@ export function DailyNutritionCalculator({
   const [expanded, setExpanded] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
   const notifiedDate = useRef<string | null>(null);
+  const edited = useRef(false);
+  const revision = useRef(0);
   const targets = useMemo(
     () => (savedProfile ? calculateTargets(savedProfile) : null),
     [savedProfile],
@@ -107,41 +111,77 @@ export function DailyNutritionCalculator({
   useEffect(() => {
     if (!isLoaded) return;
     let active = true;
+    let refreshing = false;
+    let localProfile: Profile | null = null;
+    async function refresh() {
+      if (!userId || !active || refreshing) return;
+      refreshing = true;
+      const version = revision.current;
+      try {
+        await flushProfile(userId);
+        const response = await fetch('/api/nutrition-profile', {
+          cache: 'no-store',
+          headers: { 'X-Platewise-Account': userId },
+          signal: AbortSignal.timeout(20_000),
+        });
+        if (!response.ok) throw new Error('Profile sync unavailable.');
+        const body = (await response.json()) as { profile?: unknown };
+        if (!active || version !== revision.current) return;
+        const cloudProfile = validateProfile(body.profile);
+        setSyncError(false);
+        setSavedProfile(cloudProfile);
+        if (!edited.current)
+          setProfile(cloudProfile || localProfile || defaultProfile);
+        try {
+          localStorage.setItem(
+            `${PROFILE_KEY}:${userId}`,
+            JSON.stringify(cloudProfile),
+          );
+        } catch {
+          setSyncError(true);
+        }
+      } catch {
+        if (active) setSyncError(true);
+      } finally {
+        refreshing = false;
+      }
+    }
     queueMicrotask(async () => {
       try {
         const saved = JSON.parse(
           localStorage.getItem(`${PROFILE_KEY}:${userId || 'guest'}`) || 'null',
-        ) as Profile | null;
-        if (active && saved?.age && saved?.height && saved?.weight) {
-          setProfile(saved);
-          setSavedProfile(saved);
+        );
+        const valid = validateProfile(saved);
+        localProfile = valid;
+        if (!localProfile && userId) {
+          localProfile = validateProfile(
+            JSON.parse(
+              localStorage.getItem(`${PROFILE_KEY}:guest`) ||
+                localStorage.getItem(PROFILE_KEY) ||
+                'null',
+            ),
+          );
+        }
+        if (active) {
+          setProfile(localProfile || defaultProfile);
+          setSavedProfile(valid);
         }
       } catch {}
-      if (!userId) return;
-      try {
-        const response = await fetch('/api/nutrition-profile', {
-          cache: 'no-store',
-        });
-        if (!response.ok) {
-          if (active && response.status !== 503) setSyncError(true);
-          return;
-        }
-        const body = (await response.json()) as { profile?: Profile | null };
-        if (!active) return;
-        setSyncError(false);
-        setProfile(body.profile || defaultProfile);
-        setSavedProfile(body.profile || null);
-        if (body.profile)
-          localStorage.setItem(
-            `${PROFILE_KEY}:${userId}`,
-            JSON.stringify(body.profile),
-          );
-      } catch {
-        if (active) setSyncError(true);
-      }
+      await refresh();
     });
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void refresh();
+    };
+    window.addEventListener('online', refresh);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', onVisible);
+    const timer = window.setInterval(onVisible, 30_000);
     return () => {
       active = false;
+      window.removeEventListener('online', refresh);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.clearInterval(timer);
     };
   }, [isLoaded, userId]);
 
@@ -166,21 +206,30 @@ export function DailyNutritionCalculator({
       height: Math.min(230, Math.max(120, profile.height)),
       weight: Math.min(300, Math.max(30, profile.weight)),
     };
+    const valid = validateProfile(safeProfile);
+    if (!valid) return;
+    revision.current++;
+    edited.current = false;
     setProfile(safeProfile);
     setSavedProfile(safeProfile);
     setExpanded(false);
-    localStorage.setItem(
-      `${PROFILE_KEY}:${userId || 'guest'}`,
-      JSON.stringify(safeProfile),
-    );
+    try {
+      localStorage.setItem(
+        `${PROFILE_KEY}:${userId || 'guest'}`,
+        JSON.stringify(safeProfile),
+      );
+    } catch {
+      setSyncError(true);
+    }
     if (userId) {
-      void fetch('/api/nutrition-profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(safeProfile),
-      })
-        .then((response) => setSyncError(!response.ok))
-        .catch(() => setSyncError(true));
+      try {
+        queueProfile(userId, valid);
+        void flushProfile(userId)
+          .then(() => setSyncError(false))
+          .catch(() => setSyncError(true));
+      } catch {
+        setSyncError(true);
+      }
     }
   }
 
@@ -209,7 +258,7 @@ export function DailyNutritionCalculator({
       {syncError ? (
         <output className="nutrition-sync-note">
           Your goal is saved on this device, but cloud sync is unavailable. It
-          will be retried when you edit your details.
+          will be retried when you reconnect.
         </output>
       ) : null}
 
@@ -235,7 +284,13 @@ export function DailyNutritionCalculator({
       </div>
 
       {expanded || !savedProfile ? (
-        <form className="nutrition-profile-form" onSubmit={save}>
+        <form
+          className="nutrition-profile-form"
+          onSubmit={save}
+          onChange={() => {
+            edited.current = true;
+          }}
+        >
           {!savedProfile ? (
             <div className="nutrition-form-intro">
               <strong>Let’s set your daily targets</strong>
