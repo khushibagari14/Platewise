@@ -70,6 +70,7 @@ label {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
 }
 .brand {
   display: inline-flex;
@@ -106,6 +107,10 @@ label {
   min-height: 44px;
   cursor: pointer;
   font-weight: 400;
+  justify-content: center;
+  border-radius: 12px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .history-button b {
   position: absolute;
@@ -121,14 +126,20 @@ label {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-left: auto;
 }
 .sign-in-button,
 .sign-up-button {
-  min-height: 42px;
+  min-height: 44px;
   padding: 0 15px;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 400;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  white-space: nowrap;
 }
 .sign-in-button {
   border: 1px solid var(--line);
@@ -2132,19 +2143,47 @@ input:focus-visible {
 }
 @media (max-width: 640px) {
   .site-header {
-    padding-inline: 12px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    gap: 12px;
+    padding: 16px;
+  }
+  .site-header .brand {
+    justify-self: start;
+    min-height: 44px;
   }
   .header-actions {
-    gap: 4px;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    margin-left: 0;
+    gap: 8px;
+    flex-wrap: nowrap;
   }
-  .sign-in-button,
-  .sign-up-button {
-    min-height: 40px;
-    padding: 0 9px;
-    font-size: 0.76rem;
+  .header-actions > .tour-trigger,
+  .header-actions > .sign-in-button,
+  .header-actions > .sign-up-button {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 8px;
+    font-size: 0.8rem;
   }
-  .history-button {
-    padding-inline: 8px;
+  .header-actions > .tour-trigger {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    color: var(--olive);
+  }
+  .header-actions > .cl-rootBox {
+    margin-left: auto;
+  }
+  .site-header > .history-button {
+    grid-column: 2;
+    grid-row: 1;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--line);
   }
   .history-button span {
     display: none;
@@ -2483,6 +2522,10 @@ b {
   cursor: pointer;
   min-height: 44px;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 .guest-account-note {
   display: flex;
@@ -2694,20 +2737,6 @@ b {
   outline-offset: 3px;
 }
 @media (max-width: 600px) {
-  .site-header {
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 14px 18px;
-  }
-  .header-actions {
-    flex-wrap: wrap;
-    gap: 3px;
-    justify-content: flex-end;
-  }
-  .tour-trigger {
-    font-size: 0.72rem;
-    padding: 8px 5px;
-  }
   .account-sync-banner {
     align-items: flex-start;
     padding: 13px;
@@ -2732,5 +2761,28 @@ b {
   }
   .spin {
     animation: none;
+  }
+}
+
+@media (max-height: 650px) {
+  .tour-dialog[data-slot='dialog-content'] {
+    padding: 18px;
+  }
+  .tour-dialog .tour-art,
+  .tour-dialog .tour-detail {
+    display: none;
+  }
+  .tour-copy {
+    margin-top: 18px;
+  }
+  .tour-dialog .tour-title {
+    font-size: 1.5rem;
+  }
+  .tour-description {
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+  .tour-bottom {
+    margin-top: 20px;
   }
 }

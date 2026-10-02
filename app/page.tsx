@@ -573,17 +573,17 @@ function AccountHome({
           <Show when="signed-in">
             <UserButton userProfileMode="modal" />
           </Show>
-          <button
-            className="history-button"
-            type="button"
-            onClick={openHistory}
-            aria-label="View recent meals"
-          >
-            <History size={18} />
-            <span>Recent meals</span>
-            {hasUnseenHistory && <b aria-hidden="true" />}
-          </button>
         </div>
+        <button
+          className="history-button"
+          type="button"
+          onClick={openHistory}
+          aria-label="View recent meals"
+        >
+          <History size={18} aria-hidden="true" />
+          <span>Recent meals</span>
+          {hasUnseenHistory && <b aria-hidden="true" />}
+        </button>
       </header>
       <div id="top" className="page-shell">
         {userId && (
