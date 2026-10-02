@@ -52,5 +52,20 @@
     "typescript/no-require-imports": "error",
     "typescript/no-unnecessary-type-constraint": "error",
     "typescript/no-unsafe-function-type": "error"
-  }
+  },
+  "overrides": [
+    {
+      "files": [
+        "components/ui/button-group.tsx",
+        "components/ui/input-group.tsx",
+        "components/ui/field.tsx",
+        "components/ui/carousel.tsx",
+        "components/ui/item.tsx",
+        "components/ui/input-otp.tsx"
+      ],
+      "rules": {
+        "jsx-a11y/prefer-tag-over-role": "off"
+      }
+    }
+  ]
 }
