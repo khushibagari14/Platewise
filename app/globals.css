@@ -3158,3 +3158,33 @@ b {
     animation: none;
   }
 }
+
+/* Keep the active analysis preview proportional to its compact status strip. */
+.scanner-processing .review-layout {
+  min-height: 0;
+  align-items: center;
+}
+.scanner-processing .photo-review-grid {
+  display: block;
+  height: 240px;
+}
+.scanner-processing .photo-review-grid .review-photo-main {
+  height: 240px;
+}
+.scanner-processing .review-photo:not(.review-photo-main),
+.scanner-processing .add-photo-tile,
+.scanner-processing .photo-number {
+  display: none;
+}
+.scanner-processing .review-copy {
+  padding-block: 20px;
+}
+@media (max-width: 640px) {
+  .scanner-processing .photo-review-grid,
+  .scanner-processing .photo-review-grid .review-photo-main {
+    height: 145px;
+  }
+  .scanner-processing .review-copy {
+    padding: 18px 8px 12px;
+  }
+}
