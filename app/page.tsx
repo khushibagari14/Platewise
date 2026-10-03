@@ -1147,7 +1147,7 @@ function AccountHome({
         ref={libraryRef}
         className="visually-hidden"
         type="file"
-        accept={ALLOWED_TYPES.join(',')}
+        accept="image/*"
         multiple
         onChange={pickPhoto}
       />
