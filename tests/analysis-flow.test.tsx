@@ -76,6 +76,7 @@ it('keeps processing feedback visible until the estimate arrives, then shows res
     }),
   );
   const view = render(<Home />);
+  expect(screen.getByText('Today’s intake')).toBeTruthy();
   fireEvent.change(view.container.querySelector('input[type=file]')!, {
     target: {
       files: [new File(['image'], 'meal.jpg', { type: 'image/jpeg' })],
@@ -87,18 +88,23 @@ it('keeps processing feedback visible until the estimate arrives, then shows res
   fireEvent.change(screen.getByLabelText('Anything we should know?'), {
     target: { value: 'Banana shake with milk' },
   });
+  expect(screen.queryByText('Today’s intake')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Analyze meal' }));
   await waitFor(() =>
     expect(screen.getByText('Estimating your meal’s nutrients…')).toBeTruthy(),
   );
   expect(screen.queryByRole('button', { name: 'Analyze meal' })).toBeNull();
   expect(view.container.querySelector('.scan-sweep')).toBeTruthy();
+  expect(screen.queryByText('Today’s intake')).toBeNull();
   finish(Response.json(meal));
   await waitFor(() =>
     expect(screen.getByText('Your meal estimate')).toBeTruthy(),
   );
   expect(view.container.querySelector('.meal-processing')).toBeNull();
   expect(screen.getByRole('button', { name: 'Scan another' })).toBeTruthy();
+  expect(screen.queryByText('Today’s intake')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Scan another' }));
+  expect(screen.getByText('Today’s intake')).toBeTruthy();
 });
 
 it('retains a meal and retry queue when deployment storage is not configured', async () => {

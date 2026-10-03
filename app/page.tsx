@@ -1034,7 +1034,9 @@ function AccountHome({
             </div>
           )}
         </section>
-        <TodaySummary meals={history} loading={restoringHistory} />
+        {status === 'idle' && (
+          <TodaySummary meals={history} loading={restoringHistory} />
+        )}
         {error && (
           <div className="error-message" role="alert">
             <AlertCircle size={19} />
