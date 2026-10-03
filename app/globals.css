@@ -3369,33 +3369,10 @@ b {
   .today-summary-metrics > div:not(.today-calories) dd { font-size: clamp(.95rem, 4vw, 1.15rem); }
 }
 
-/* A brighter camera canvas with a clear, tangible capture action. */
-.photo-drop { position: relative; isolation: isolate; height: 330px; overflow: hidden; border-radius: 22px; cursor: pointer; }
-.photo-drop > img { object-position: center 48%; transition: transform 450ms ease; }
-.photo-drop::after { background: linear-gradient(180deg, rgba(18,32,23,.02) 35%, rgba(18,32,23,.35) 100%); }
-.photo-drop .photo-overlay { position: absolute; inset: auto 20px 20px; display: flex; flex-direction: row; align-items: center; gap: 13px; padding: 12px 14px; border: 1px solid rgba(255,255,255,.7); border-radius: 16px; background: rgba(255,253,247,.94); color: var(--olive); text-align: left; text-shadow: none; box-shadow: 0 8px 24px rgba(20,36,25,.12); }
-.photo-drop .camera-circle { width: 44px; height: 44px; flex-shrink: 0; margin: 0; border: 0; border-radius: 13px; background: #e5ebdb; color: var(--olive); backdrop-filter: none; }
-.capture-copy { display: flex; flex-direction: column; min-width: 0; gap: 4px; }
-.photo-drop .capture-copy strong { font-size: 1rem; font-weight: 400; }
-.photo-drop .capture-copy small { font-size: .75rem; color: var(--ink-muted); margin: 0; }
-.photo-drop .photo-overlay > svg { margin-left: auto; flex-shrink: 0; }
-.meal-viewfinder { position: absolute; left: 50%; top: 38%; transform: translate(-50%,-50%); width: 190px; height: 128px; pointer-events: none; }
-.meal-viewfinder i { position: absolute; width: 26px; height: 26px; border-color: rgba(255,255,255,.85); border-style: solid; border-width: 0; filter: drop-shadow(0 1px 3px rgba(0,0,0,.12)); }
-.meal-viewfinder i:nth-child(1) { top: 0; left: 0; border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 12px; }
-.meal-viewfinder i:nth-child(2) { top: 0; right: 0; border-top-width: 2px; border-right-width: 2px; border-top-right-radius: 12px; }
-.meal-viewfinder i:nth-child(3) { bottom: 0; left: 0; border-bottom-width: 2px; border-left-width: 2px; border-bottom-left-radius: 12px; }
-.meal-viewfinder i:nth-child(4) { bottom: 0; right: 0; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 12px; }
-.scanner-card .upload-actions .secondary-action { background: #fffdf7; border: 1px solid var(--line); border-radius: 13px; transition: background-color 160ms ease; }
-.scanner-card .upload-actions .secondary-action:hover { background: var(--olive-soft); }
+/* Refine the original centered photo entry without extra visual layers. */
+.photo-drop .photo-overlay { position: absolute; inset: 0; padding: 0 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.photo-drop::after { background: linear-gradient(180deg, rgba(22,33,24,.08), rgba(22,33,24,.52)); }
+.photo-drop .camera-circle { width: 60px; height: 60px; margin-bottom: 12px; background: rgba(255,253,247,.2); border: 1px solid rgba(255,255,255,.6); backdrop-filter: blur(6px); }
+.photo-drop .photo-overlay strong { font-size: 1.1rem; font-weight: 400; }
+.photo-drop .photo-overlay small { font-size: .78rem; margin-top: 5px; }
 .photo-drop:focus-visible { outline: 2px solid var(--olive); outline-offset: 4px; }
-@media (hover: hover) { .photo-drop:hover > img { transform: scale(1.025); } }
-@media (max-width: 640px) {
-  .photo-drop { height: 230px; border-radius: 18px; }
-  .meal-viewfinder { width: 114px; height: 76px; top: 33%; }
-  .meal-viewfinder i { width: 20px; height: 20px; }
-  .photo-drop .photo-overlay { inset: auto 12px 12px; padding: 10px 12px; gap: 10px; border-radius: 13px; }
-  .photo-drop .capture-copy strong { font-size: .9rem; }
-  .photo-drop .capture-copy small { font-size: .68rem; }
-  .photo-drop .camera-circle { width: 38px; height: 38px; border-radius: 11px; }
-}
-@media (prefers-reduced-motion: reduce) { .photo-drop > img, .scanner-card .upload-actions .secondary-action { transition: none; } .photo-drop:hover > img { transform: none; } }
