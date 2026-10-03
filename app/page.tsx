@@ -16,7 +16,6 @@ import {
   ImagePlus,
   Leaf,
   LoaderCircle,
-  MoreHorizontal,
   RotateCcw,
   ShieldCheck,
   Sparkles,
@@ -1245,23 +1244,21 @@ function AccountHome({
                             <ChevronRight size={18} />
                           </button>
                           <button
-                            className="saved-meal-options"
-                            type="button"
-                            onClick={() => setPendingMealDeleteId(confirming ? null : meal.id)}
-                            aria-label={`Options for ${meal.title}`}
-                            aria-expanded={confirming}
+                            className={`saved-meal-delete ${confirming ? 'confirming' : ''}`}
+                            onClick={() =>
+                              confirming
+                                ? deleteSavedMeal(meal.id)
+                                : setPendingMealDeleteId(meal.id)
+                            }
+                            aria-label={
+                              confirming
+                                ? `Confirm deletion of ${meal.title}`
+                                : `Delete ${meal.title}`
+                            }
                           >
-                            <MoreHorizontal size={20} />
+                            <Trash2 size={17} />
+                            <span>{confirming ? 'Delete' : 'Remove'}</span>
                           </button>
-                          {confirming && (
-                            <section className="saved-meal-removal" aria-label={`Remove ${meal.title}`}>
-                              <span>Remove this meal?</span>
-                              <button type="button" onClick={() => setPendingMealDeleteId(null)}>Cancel</button>
-                              <button type="button" onClick={() => deleteSavedMeal(meal.id)} aria-label={`Confirm deletion of ${meal.title}`}>
-                                <Trash2 size={14} /> Remove
-                              </button>
-                            </section>
-                          )}
                         </div>
                       );
                     })}
@@ -1286,3 +1283,4 @@ function AccountHome({
     </main>
   );
 }
+
