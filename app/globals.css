@@ -3383,7 +3383,5 @@ b {
 .history-date-row label { min-width: 0; }
 .history-date-row input { box-sizing: border-box; display: block; width: 100%; max-width: 100%; min-width: 0; height: 44px; padding: 8px 12px; font-size: 16px; font-weight: 400; color: var(--olive); border: 1px solid var(--line); border-radius: 12px; background: #fffdf7; -webkit-appearance: none; appearance: none; }
 .history-date-row input::-webkit-date-and-time-value { min-width: 0; text-align: center; }
-.history-day-shortcuts { display: flex; gap: 8px; margin-top: 10px; }
-.history-day-shortcuts button { min-height: 40px; padding: 7px 14px; font-size: .76rem; border: 1px solid var(--line); border-radius: 20px; background: transparent; color: var(--ink-muted); cursor: pointer; }
-.history-day-shortcuts button[aria-pressed='true'] { background: var(--olive-soft); color: var(--olive); }
 .history-day-picker button:focus-visible, .history-day-picker input:focus-visible { outline: 2px solid var(--olive); outline-offset: 3px; }
+

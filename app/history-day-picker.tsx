@@ -10,8 +10,6 @@ export function HistoryDayPicker({
   onChange: (date: string) => void;
 }) {
   const today = localDate();
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
   function move(days: number) {
     const next = new Date(`${date}T12:00:00`);
     next.setDate(next.getDate() + days);
@@ -49,22 +47,7 @@ export function HistoryDayPicker({
           <ChevronRight size={18} />
         </button>
       </div>
-      <div className="history-day-shortcuts">
-        <button
-          type="button"
-          aria-pressed={date === today}
-          onClick={() => onChange(today)}
-        >
-          Today
-        </button>
-        <button
-          type="button"
-          aria-pressed={date === localDate(yesterday)}
-          onClick={() => onChange(localDate(yesterday))}
-        >
-          Yesterday
-        </button>
-      </div>
     </section>
   );
 }
+
