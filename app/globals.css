@@ -3342,3 +3342,29 @@ b {
 .today-summary-metrics dd span { font-size: .8rem; color: var(--ink-muted); }
 .today-summary > p { margin: 16px 0 0; font-size: .75rem; color: var(--ink-muted); }
 @media (max-width: 640px) { .today-summary { padding: 18px; margin-top: 14px; } .today-summary-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 12px; } .today-summary-metrics .today-calories { grid-column: span 2; } .today-summary-metrics dd { font-size: 1.3rem; } }
+
+/* A clear daily total followed by four balanced nutrient columns. */
+.today-summary { padding: 20px; border-radius: 22px; background: #fffdf8; }
+.today-summary-heading { margin-bottom: 16px; }
+.today-summary-heading h2 { font-family: Georgia, serif; font-size: 1.12rem; letter-spacing: -.02em; }
+.today-summary-heading > span { padding: 5px 9px; border-radius: 20px; background: #eff1e8; color: #68745f; font-size: .68rem; white-space: nowrap; }
+.today-summary-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 0; }
+.today-summary-metrics .today-calories { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; border-radius: 14px; background: linear-gradient(110deg, #e9eedf, #f1f3e9); }
+.today-summary-metrics .today-calories dt { margin: 0; font-size: .8rem; color: #52624c; }
+.today-summary-metrics .today-calories dd { font-size: 2.25rem; line-height: 1; letter-spacing: -.04em; }
+.today-summary-metrics > div:not(.today-calories) { min-width: 0; padding-inline: 10px; border-left: 1px solid var(--line); }
+.today-summary-metrics > .today-protein { border-left: 0; padding-left: 0; }
+.today-summary-metrics > .today-fiber { padding-right: 0; }
+.today-summary-metrics > div:not(.today-calories) dt { font-size: .68rem; margin-bottom: 8px; }
+.today-summary-metrics > div:not(.today-calories) dd { font-size: 1.2rem; line-height: 1.3; letter-spacing: -.025em; }
+.today-summary-metrics dd span { font-size: .68rem; letter-spacing: 0; }
+.today-summary > p { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 16px; }
+@media (max-width: 640px) {
+  .today-summary { padding: 18px; }
+  .today-summary-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 0; }
+  .today-summary-metrics .today-calories { grid-column: 1 / -1; }
+  .today-summary-metrics > div:not(.today-calories) { padding-inline: 8px; }
+  .today-summary-metrics > .today-protein { padding-left: 0; }
+  .today-summary-metrics > .today-fiber { padding-right: 0; }
+  .today-summary-metrics > div:not(.today-calories) dd { font-size: clamp(.95rem, 4vw, 1.15rem); }
+}
