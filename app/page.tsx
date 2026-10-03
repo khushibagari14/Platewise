@@ -713,11 +713,11 @@ function AccountHome({
               <div className="scanner-copy">
                 <div>
                   <span className="step-label">01 · Add your meal</span>
-                  <h2 id="scanner-title">Snap it. We’ll do the counting.</h2>
+                  <h2 id="scanner-title">Start with your plate.</h2>
                 </div>
                 <p>
-                  For the clearest estimate, photograph the whole plate in good
-                  light.
+                  Take a photo or log what you ate. Fine-tune the estimate
+                  afterward.
                 </p>
               </div>
               <button
@@ -733,12 +733,21 @@ function AccountHome({
                   sizes="(max-width: 920px) 100vw, 880px"
                   priority
                 />
+                <span className="meal-viewfinder" aria-hidden="true">
+                  <i />
+                  <i />
+                  <i />
+                  <i />
+                </span>
                 <span className="photo-overlay">
                   <span className="camera-circle">
-                    <Camera size={25} />
+                    <Camera size={23} aria-hidden="true" />
                   </span>
-                  <strong>Take a photo</strong>
-                  <small>or choose one from your phone</small>
+                  <span className="capture-copy">
+                    <strong>Take a meal photo</strong>
+                    <small>Tap to open your camera</small>
+                  </span>
+                  <ChevronRight size={20} aria-hidden="true" />
                 </span>
               </button>
               <div className="upload-actions">
