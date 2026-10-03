@@ -48,10 +48,14 @@ it('keeps processing feedback visible until the estimate arrives, then shows res
   vi.stubGlobal(
     'fetch',
     vi.fn().mockImplementation((url: string, init?: RequestInit) => {
-      if (url === '/api/analyze-meal')
+      if (url === '/api/analyze-meal') {
+        expect((init!.body as FormData).get('photoContext')).toBe(
+          'Banana shake with milk',
+        );
         return new Promise<Response>((resolve) => {
           finish = resolve;
         });
+      }
       if (url.startsWith('data:'))
         return Promise.resolve(new Response(new Blob(['image'])));
       return Promise.resolve(
@@ -70,6 +74,9 @@ it('keeps processing feedback visible until the estimate arrives, then shows res
   await waitFor(() =>
     expect(screen.getByRole('button', { name: 'Analyze meal' })).toBeTruthy(),
   );
+  fireEvent.change(screen.getByLabelText('Anything we should know?'), {
+    target: { value: 'Banana shake with milk' },
+  });
   fireEvent.click(screen.getByRole('button', { name: 'Analyze meal' }));
   await waitFor(() =>
     expect(screen.getByText('Estimating your meal’s nutrients…')).toBeTruthy(),

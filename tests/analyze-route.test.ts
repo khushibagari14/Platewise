@@ -96,15 +96,13 @@ it('estimates a typed meal without requiring an image', async () => {
     confidence: 'medium',
     notes: ['Portions estimated.'],
   };
-  const fetcher = vi
-    .fn()
-    .mockResolvedValue(
-      Response.json({
-        candidates: [
-          { content: { parts: [{ text: JSON.stringify(generated) }] } },
-        ],
-      }),
-    );
+  const fetcher = vi.fn().mockResolvedValue(
+    Response.json({
+      candidates: [
+        { content: { parts: [{ text: JSON.stringify(generated) }] } },
+      ],
+    }),
+  );
   vi.stubGlobal('fetch', fetcher);
   const form = new FormData();
   form.append('description', '2 slices of bread and 100 g curd');
@@ -130,6 +128,81 @@ it('rejects overlong manual descriptions before provider calls', async () => {
   vi.stubGlobal('fetch', fetcher);
   const form = new FormData();
   form.append('description', 'a'.repeat(1001));
+  const response = await POST(
+    new Request('http://localhost/api/analyze-meal', {
+      method: 'POST',
+      body: form,
+      headers: {
+        'X-Platewise-Account': 'scan_user',
+        'x-forwarded-for': crypto.randomUUID(),
+      },
+    }),
+  );
+  expect(response.status).toBe(400);
+  expect(fetcher).not.toHaveBeenCalled();
+});
+
+it('passes optional photo details alongside the image to the model', async () => {
+  const generated = {
+    title: 'Banana shake',
+    items: [
+      {
+        name: 'Banana shake',
+        portion: '250 ml',
+        calories: 200,
+        protein: 6,
+        carbs: 35,
+        fat: 4,
+        fiber: 2,
+      },
+    ],
+    confidence: 'medium',
+    notes: [],
+  };
+  const fetcher = vi
+    .fn()
+    .mockResolvedValue(
+      Response.json({
+        candidates: [
+          { content: { parts: [{ text: JSON.stringify(generated) }] } },
+        ],
+      }),
+    );
+  vi.stubGlobal('fetch', fetcher);
+  const form = new FormData();
+  form.append(
+    'images',
+    new File(['photo'], 'shake.jpg', { type: 'image/jpeg' }),
+  );
+  form.append('photoContext', 'Banana shake with milk, no added sugar');
+  const response = await POST(
+    new Request('http://localhost/api/analyze-meal', {
+      method: 'POST',
+      body: form,
+      headers: {
+        'X-Platewise-Account': 'scan_user',
+        'x-forwarded-for': crypto.randomUUID(),
+      },
+    }),
+  );
+  expect(response.status).toBe(200);
+  const sent = JSON.parse(fetcher.mock.calls[0][1].body as string) as {
+    contents: { parts: { text?: string; inline_data?: unknown }[] }[];
+  };
+  expect(sent.contents[0].parts[0].text).toContain(
+    'Banana shake with milk, no added sugar',
+  );
+  expect(sent.contents[0].parts[1].inline_data).toBeTruthy();
+});
+it('rejects oversized optional photo details', async () => {
+  const fetcher = vi.fn();
+  vi.stubGlobal('fetch', fetcher);
+  const form = new FormData();
+  form.append(
+    'images',
+    new File(['photo'], 'shake.jpg', { type: 'image/jpeg' }),
+  );
+  form.append('photoContext', 'a'.repeat(501));
   const response = await POST(
     new Request('http://localhost/api/analyze-meal', {
       method: 'POST',

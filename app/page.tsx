@@ -131,6 +131,7 @@ async function compressImage(
 export default function Home() {
   const { isLoaded, userId } = useAuth();
   const [guestPhotos, setGuestPhotos] = useState<Photo[]>([]);
+  const [photoContext, setPhotoContext] = useState('');
   const [showManualMeal, setShowManualMeal] = useState(false);
   const [manualDraft, setManualDraft] = useState<ManualMealInput>(() => ({
     description: '',
@@ -148,6 +149,8 @@ export default function Home() {
       key={userId || 'guest'}
       initialPhotos={guestPhotos}
       onGuestPhotosChange={setGuestPhotos}
+      photoContext={photoContext}
+      setPhotoContext={setPhotoContext}
       showManualMeal={showManualMeal}
       setShowManualMeal={setShowManualMeal}
       manualDraft={manualDraft}
@@ -159,6 +162,8 @@ export default function Home() {
 function AccountHome({
   initialPhotos,
   onGuestPhotosChange,
+  photoContext,
+  setPhotoContext,
   showManualMeal,
   setShowManualMeal,
   manualDraft,
@@ -166,6 +171,8 @@ function AccountHome({
 }: {
   initialPhotos: Photo[];
   onGuestPhotosChange: (photos: Photo[]) => void;
+  photoContext: string;
+  setPhotoContext: (context: string) => void;
   showManualMeal: boolean;
   setShowManualMeal: (open: boolean) => void;
   manualDraft: ManualMealInput;
@@ -419,6 +426,7 @@ function AccountHome({
         preview: photo.preview,
       }));
       const nextPhotos = [...keptPhotos, ...additions];
+      if (replaceRejectedPhotos) setPhotoContext('');
       setReplaceRejectedPhotos(false);
       setPhotos(nextPhotos);
       if (!userId) onGuestPhotosChange(nextPhotos);
@@ -449,6 +457,7 @@ function AccountHome({
       photos.forEach((photo, index) =>
         form.append('images', photo.blob, `meal-${index + 1}.jpg`),
       );
+      if (photoContext.trim()) form.append('photoContext', photoContext.trim());
       const response = await fetch('/api/analyze-meal', {
         method: 'POST',
         body: form,
@@ -524,6 +533,7 @@ function AccountHome({
     void syncMeal(saved);
     setAnalysis(saved);
     setPreview(thumbnail);
+    setPhotoContext('');
     setPhotos([]);
     setReplaceRejectedPhotos(false);
     setSelectedDate(input.date);
@@ -576,6 +586,7 @@ function AccountHome({
       return;
     }
     setReplaceRejectedPhotos(false);
+    setPhotoContext('');
     setPhotos([]);
     if (!userId) onGuestPhotosChange([]);
     setPreview('');
@@ -589,6 +600,7 @@ function AccountHome({
     setCurrentMealId(meal.id);
     setPreview(meal.thumbnail);
     setReplaceRejectedPhotos(false);
+    setPhotoContext('');
     setPhotos([]);
     if (!userId) onGuestPhotosChange([]);
     setStatus('result');
@@ -819,6 +831,29 @@ function AccountHome({
                     ? 'Every photo is treated as one meal, so the same food is counted once.'
                     : 'Tap Analyze meal for your estimate. Extra angles are optional.'}
                 </p>
+                {status === 'ready' && (
+                  <details className="photo-context">
+                    <summary>
+                      Add details <span>optional</span>
+                    </summary>
+                    <label>
+                      Anything we should know?
+                      <textarea
+                        rows={2}
+                        maxLength={500}
+                        value={photoContext}
+                        onChange={(event) =>
+                          setPhotoContext(event.target.value)
+                        }
+                        placeholder="Banana shake with milk, no added sugar"
+                      />
+                    </label>
+                    <small>
+                      Ingredients, amounts or extras that the photo might not
+                      show.
+                    </small>
+                  </details>
+                )}
                 {status === 'loading' ? (
                   <MealProcessing />
                 ) : (
