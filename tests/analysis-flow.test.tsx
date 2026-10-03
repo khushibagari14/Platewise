@@ -6,13 +6,18 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
+const authState = vi.hoisted(() => ({
+  isLoaded: true,
+  isSignedIn: true,
+  userId: 'analysis_test' as string | null,
+}));
+const authActions = vi.hoisted(() => ({
+  openSignUp: vi.fn(),
+  openSignIn: vi.fn(),
+}));
 vi.mock('@clerk/nextjs', () => ({
-  useAuth: () => ({
-    isLoaded: true,
-    isSignedIn: true,
-    userId: 'analysis_test',
-  }),
-  useClerk: () => ({ openSignUp: vi.fn(), openSignIn: vi.fn() }),
+  useAuth: () => authState,
+  useClerk: () => authActions,
   Show: () => null,
   SignInButton: () => null,
   SignUpButton: () => null,
@@ -21,6 +26,11 @@ vi.mock('@clerk/nextjs', () => ({
 import Home from '@/app/page';
 import { meal } from './fixtures';
 beforeEach(() => {
+  authState.isLoaded = true;
+  authState.isSignedIn = true;
+  authState.userId = 'analysis_test';
+  authActions.openSignUp.mockClear();
+  authActions.openSignIn.mockClear();
   localStorage.clear();
   localStorage.setItem('platewise:tour:v1', '1');
   vi.stubGlobal(
@@ -224,4 +234,62 @@ it('logs a typed breakfast for yesterday with no photo and keeps it editable', a
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
   ).toBe(chosen);
   expect(screen.getByLabelText('Amount of Rice')).toBeTruthy();
+});
+
+it('opens sign-up for guest analysis and preserves photos and details through authentication', async () => {
+  authState.isSignedIn = false;
+  authState.userId = null;
+  let analysisRequests = 0;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (url === '/api/analyze-meal') {
+        analysisRequests++;
+        expect((init!.body as FormData).getAll('images')).toHaveLength(1);
+        expect((init!.body as FormData).get('photoContext')).toBe(
+          'Banana shake',
+        );
+        return Promise.resolve(Response.json(meal));
+      }
+      if (url.startsWith('data:'))
+        return Promise.resolve(new Response(new Blob(['image'])));
+      return Promise.resolve(
+        init?.method === 'POST'
+          ? Response.json({ saved: true })
+          : Response.json({ meals: [] }),
+      );
+    }),
+  );
+  const view = render(<Home />);
+  fireEvent.change(view.container.querySelector('input[type=file]')!, {
+    target: {
+      files: [new File(['image'], 'shake.jpg', { type: 'image/jpeg' })],
+    },
+  });
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Analyze meal' })).toBeTruthy(),
+  );
+  fireEvent.change(screen.getByLabelText('Anything we should know?'), {
+    target: { value: 'Banana shake' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Analyze meal' }));
+  expect(authActions.openSignUp).toHaveBeenCalledTimes(1);
+  expect(authActions.openSignIn).not.toHaveBeenCalled();
+  expect(analysisRequests).toBe(0);
+  authState.isSignedIn = true;
+  authState.userId = 'analysis_test';
+  view.rerender(<Home />);
+  await waitFor(() =>
+    expect(view.container.querySelectorAll('.review-photo')).toHaveLength(1),
+  );
+  expect(
+    (screen.getByLabelText('Anything we should know?') as HTMLTextAreaElement)
+      .value,
+  ).toBe('Banana shake');
+  fireEvent.click(screen.getByRole('button', { name: 'Analyze meal' }));
+  await waitFor(() =>
+    expect(screen.getByText('Your meal estimate')).toBeTruthy(),
+  );
+  expect(analysisRequests).toBe(1);
+  expect(authActions.openSignUp).toHaveBeenCalledTimes(1);
 });

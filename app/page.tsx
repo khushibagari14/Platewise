@@ -441,7 +441,7 @@ function AccountHome({
   async function analyzeMeal() {
     if (!photos.length) return;
     if (!isSignedIn) {
-      if (isLoaded) openSignIn();
+      if (isLoaded) openSignUp();
       return;
     }
     if (!navigator.onLine)
