@@ -219,6 +219,9 @@ it('logs a typed breakfast for yesterday with no photo and keeps it editable', a
   fireEvent.change(screen.getByLabelText('What did you eat?'), {
     target: { value: '2 slices of bread and 100 g curd' },
   });
+  fireEvent.change(screen.getByLabelText('Meal'), {
+    target: { value: 'Breakfast' },
+  });
   fireEvent.click(screen.getByRole('button', { name: 'Yesterday' }));
   const chosen = (screen.getByLabelText('Meal date') as HTMLInputElement).value;
   fireEvent.click(screen.getByRole('button', { name: 'Estimate & save meal' }));

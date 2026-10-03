@@ -32,3 +32,11 @@ export function manualMealThumbnail() {
   }
   return canvas.toDataURL('image/jpeg', 0.65);
 }
+
+export function suggestedMealType(date = new Date()): string {
+  const hour = date.getHours();
+  if (hour >= 5 && hour < 11) return 'Breakfast';
+  if (hour >= 11 && hour < 16) return 'Lunch';
+  if (hour >= 18 && hour < 23) return 'Dinner';
+  return 'Snack';
+}

@@ -34,6 +34,7 @@ import {
   manualMealTimestamp,
   type ManualMealInput,
   localDate,
+  suggestedMealType,
 } from '@/lib/manual-meal';
 import { PanelTransition } from './panel-transition';
 import { PortionEditor } from './portion-editor';
@@ -137,7 +138,7 @@ export default function Home() {
   const [showManualMeal, setShowManualMeal] = useState(false);
   const [manualDraft, setManualDraft] = useState<ManualMealInput>(() => ({
     description: '',
-    mealType: 'Breakfast',
+    mealType: suggestedMealType(),
     date: localDate(),
   }));
   if (!isLoaded) return <AppLoading />;
@@ -750,7 +751,15 @@ function AccountHome({
                 </button>
                 <button
                   className="secondary-action"
-                  onClick={() => setShowManualMeal(true)}
+                  onClick={() => {
+                    if (!manualDraft.description.trim())
+                      setManualDraft({
+                        ...manualDraft,
+                        mealType: suggestedMealType(),
+                        date: localDate(),
+                      });
+                    setShowManualMeal(true);
+                  }}
                 >
                   <Leaf size={18} /> Add manually
                 </button>
