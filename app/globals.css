@@ -3322,3 +3322,10 @@ b {
 .tour-footer .tour-primary { height: 48px; min-width: 0; padding: 8px 10px; gap: 8px; font-size: .8rem; line-height: 1.3; }
 .tour-footer .tour-primary svg { flex-shrink: 0; }
 .tour-footer .tour-login { height: 48px; min-height: 48px; margin: 0; padding: 4px 6px; line-height: 1.3; }
+.app-loading { min-height: 100svh; min-height: 100dvh; display: grid; place-items: center; padding: 24px; background: var(--cream, #f5f1e7); }
+.app-loading-content { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; color: var(--olive); animation: backdrop-arrive 220ms ease-out; }
+.app-loading-mark { position: relative; display: grid; place-items: center; width: 58px; height: 58px; border-radius: 50%; background: var(--olive-soft); }
+.app-loading-mark > span { position: absolute; inset: -5px; border-radius: 50%; border: 1.5px solid var(--line); border-top-color: var(--olive); animation: meal-orbit 1.8s linear infinite; }
+.app-loading-brand { font-family: Georgia, serif; font-size: 1.35rem; font-weight: 400; }
+.app-loading-caption { margin: -6px 0 0; font-size: .78rem; color: var(--ink-muted); }
+@media (prefers-reduced-motion: reduce) { .app-loading-content, .app-loading-mark > span { animation: none; } }

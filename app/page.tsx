@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
+import { AppLoading } from './app-loading';
 import { AppTour } from './app-tour';
 import { ManualMealDialog } from './manual-meal-dialog';
 import {
@@ -138,12 +139,7 @@ export default function Home() {
     mealType: 'Breakfast',
     date: localDate(),
   }));
-  if (!isLoaded)
-    return (
-      <main className="page-shell">
-        <p>Loading your account…</p>
-      </main>
-    );
+  if (!isLoaded) return <AppLoading />;
   return (
     <AccountHome
       key={userId || 'guest'}
