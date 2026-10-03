@@ -3285,3 +3285,36 @@ b {
   .manual-date-shortcuts { margin-bottom: 16px; }
   .add-more-actions button { min-height: 48px; }
 }
+
+/* Navigation stays anchored while only the tour's explanation can scroll. */
+.tour-dialog[data-slot='dialog-content'] { height: min(620px, calc(100dvh - 32px)); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; padding: 22px; }
+.tour-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 2px 12px; }
+.tour-body .tour-art { height: 128px; margin: 12px 0 18px; gap: 10px; }
+.tour-body .tour-orbit { width: 64px; height: 64px; }
+.tour-body .tour-art > span { font-size: .8rem; color: var(--olive); letter-spacing: 0; }
+.tour-body .tour-title { font-size: 1.65rem; margin-bottom: 10px; }
+.tour-body .tour-kicker { margin-bottom: 8px; }
+.tour-body .tour-description { font-size: .86rem; line-height: 1.6; }
+.tour-body .tour-detail { margin-top: 12px; font-size: .76rem; min-height: 0; }
+.tour-footer { border-top: 1px solid var(--line); padding-top: 14px; background: var(--paper); }
+.tour-footer .tour-bottom { margin: 0 0 12px; }
+.tour-step-count { color: var(--ink-muted); font-size: .72rem; }
+.tour-footer .tour-navigation { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 10px; }
+.tour-footer .tour-primary, .tour-footer .tour-back { min-height: 48px; }
+.tour-footer .tour-back { border: 1px solid var(--line); }
+.tour-footer .tour-back:disabled { visibility: hidden; }
+.tour-footer .tour-login { margin: 4px 0 0; min-height: 44px; font-size: .74rem; }
+.tour-login-placeholder { height: 48px; }
+@media (max-height: 650px) {
+  .tour-dialog[data-slot='dialog-content'] { padding: 16px 18px; }
+  .tour-body .tour-art { height: 86px; margin: 8px 0 12px; flex-direction: row; gap: 12px; }
+  .tour-body .tour-orbit { width: 52px; height: 52px; }
+  .tour-body .tour-title { font-size: 1.4rem; }
+  .tour-body .tour-detail { font-size: .72rem; }
+  .tour-footer { padding-top: 10px; }
+}
+@media (max-height: 650px) {
+  .tour-dialog .tour-body .tour-art { display: flex; }
+  .tour-dialog .tour-body .tour-detail { display: block; }
+  .tour-body .tour-copy { margin-top: 0; }
+}
