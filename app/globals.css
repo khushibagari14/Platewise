@@ -3266,3 +3266,22 @@ b {
 .reset-meal-button:focus-visible { outline: 2px solid var(--olive); outline-offset: 3px; }
 @media (max-width: 640px) { .add-more-actions button { flex-wrap: wrap; text-align: center; line-height: 1.4; } .reset-meal-button { width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .reset-meal-button { transition: none; } }
+
+/* Keep native date controls and long content inside their responsive columns. */
+.manual-meal-options { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
+.manual-meal-options > label { min-width: 0; max-width: 100%; }
+.manual-meal-dialog input[type='date'] { display: block; box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; -webkit-appearance: none; appearance: none; text-align: left; }
+.manual-meal-dialog input[type='date']::-webkit-date-and-time-value { min-width: 0; text-align: left; }
+.manual-meal-dialog input[type='date']::-webkit-datetime-edit { min-width: 0; padding: 0; }
+.manual-meal-dialog form, .manual-meal-dialog fieldset { min-width: 0; max-width: 100%; }
+.manual-meal-dialog textarea, .photo-context textarea { box-sizing: border-box; max-width: 100%; }
+.result-top > div, .food-main, .calendar-meal-main { min-width: 0; }
+.result-top h2, .calendar-meal-main strong, .history-sync-note, .manual-error { overflow-wrap: anywhere; }
+.manual-date-shortcuts button { min-height: 40px; }
+.photo-context summary { min-height: 24px; }
+@media (max-width: 480px) {
+  .manual-meal-options { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .manual-meal-dialog[data-slot='dialog-content'] { max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); scroll-padding-block: 20px; }
+  .manual-date-shortcuts { margin-bottom: 16px; }
+  .add-more-actions button { min-height: 48px; }
+}
