@@ -3365,3 +3365,9 @@ b {
 .saved-meal-removal button { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 8px 10px; border: 0; border-radius: 9px; background: transparent; color: var(--olive); font: inherit; cursor: pointer; }
 .saved-meal-removal button:last-child { color: var(--tomato); background: #fbf0ec; }
 .saved-meal-removal { min-width: 0; margin: 0; border: 0; }
+/* Keep the expanded confirmation predictable on mobile, including Safari. */
+.saved-meal-removal { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; padding: 14px; background: #f4f3eb; border: 1px solid var(--line); border-radius: 14px; }
+.saved-meal-removal > span { grid-column: 1 / -1; display: block; font-size: .82rem; line-height: 1.5; color: var(--olive); }
+.saved-meal-removal > button { width: 100%; min-width: 0; min-height: 44px; margin: 0; padding: 10px 12px; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 7px; font-size: .8rem; line-height: 1.25; font-weight: 400; border: 1px solid var(--line); background: #fffdf7; border-radius: 10px; }
+.saved-meal-removal > button:last-child { background: #fbf0ec; border-color: #ead0c9; color: var(--tomato); }
+.saved-meal-removal svg { flex-shrink: 0; width: 14px; height: 14px; }

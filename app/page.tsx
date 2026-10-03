@@ -1254,13 +1254,13 @@ function AccountHome({
                             <MoreHorizontal size={20} />
                           </button>
                           {confirming && (
-                            <fieldset className="saved-meal-removal" aria-label={`Remove ${meal.title}`}>
+                            <section className="saved-meal-removal" aria-label={`Remove ${meal.title}`}>
                               <span>Remove this meal?</span>
                               <button type="button" onClick={() => setPendingMealDeleteId(null)}>Cancel</button>
                               <button type="button" onClick={() => deleteSavedMeal(meal.id)} aria-label={`Confirm deletion of ${meal.title}`}>
                                 <Trash2 size={14} /> Remove
                               </button>
-                            </fieldset>
+                            </section>
                           )}
                         </div>
                       );
