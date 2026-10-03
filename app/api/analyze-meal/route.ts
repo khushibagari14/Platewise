@@ -236,6 +236,11 @@ export async function POST(request: Request) {
       }),
     );
     const requestBody = JSON.stringify({
+      systemInstruction: {
+        parts: [{
+          text: 'Estimate protein conservatively. When a reliable nutrition label or explicit ingredient amounts are provided, use those values and the stated portion; do not reduce known values arbitrarily. Otherwise use typical food composition matched to the food and its cooked or raw state. For uncertain portion sizes, recipes or food identities, choose a plausible estimate near the lower end of the realistic protein range, slightly above its lower bound, rather than the midpoint or upper end. Do not assume hidden protein powder, extra meat, high-protein milk or other protein-rich ingredients without evidence. Keep the reported portion and all nutrients internally consistent; do not apply a blanket protein discount. Explain material protein assumptions in a short note and state that photo-based values are estimates, not exact measurements. Never claim that the estimate is guaranteed to be at or below the actual protein content.',
+        }],
+      },
       contents: [
         {
           role: 'user',

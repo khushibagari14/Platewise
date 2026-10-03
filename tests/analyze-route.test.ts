@@ -119,7 +119,10 @@ it('estimates a typed meal without requiring an image', async () => {
   expect(response.status).toBe(200);
   const sent = JSON.parse(fetcher.mock.calls[0][1].body as string) as {
     contents: { parts: { text: string }[] }[];
+    systemInstruction: { parts: { text: string }[] };
   };
+  expect(sent.systemInstruction.parts[0].text).toContain('near the lower end');
+  expect(sent.systemInstruction.parts[0].text).toContain('do not reduce known values arbitrarily');
   expect(sent.contents[0].parts).toHaveLength(1);
   expect(sent.contents[0].parts[0].text).toContain('2 slices of bread');
 });
@@ -188,7 +191,10 @@ it('passes optional photo details alongside the image to the model', async () =>
   expect(response.status).toBe(200);
   const sent = JSON.parse(fetcher.mock.calls[0][1].body as string) as {
     contents: { parts: { text?: string; inline_data?: unknown }[] }[];
+    systemInstruction: { parts: { text: string }[] };
   };
+  expect(sent.systemInstruction.parts[0].text).toContain('near the lower end');
+  expect(sent.systemInstruction.parts[0].text).toContain('not exact measurements');
   expect(sent.contents[0].parts[0].text).toContain(
     'Banana shake with milk, no added sugar',
   );
