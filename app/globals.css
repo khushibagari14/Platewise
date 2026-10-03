@@ -3318,3 +3318,7 @@ b {
   .tour-dialog .tour-body .tour-detail { display: block; }
   .tour-body .tour-copy { margin-top: 0; }
 }
+.tour-footer .tour-navigation { height: 48px; }
+.tour-footer .tour-primary { height: 48px; min-width: 0; padding: 8px 10px; gap: 8px; font-size: .8rem; line-height: 1.3; }
+.tour-footer .tour-primary svg { flex-shrink: 0; }
+.tour-footer .tour-login { height: 48px; min-height: 48px; margin: 0; padding: 4px 6px; line-height: 1.3; }
