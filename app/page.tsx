@@ -11,7 +11,6 @@ import {
   AlertCircle,
   CalendarDays,
   Camera,
-  ChevronLeft,
   ChevronRight,
   History,
   ImagePlus,
@@ -25,6 +24,7 @@ import {
 } from 'lucide-react';
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
+import { HistoryDayPicker } from './history-day-picker';
 import { TodaySummary } from './today-summary';
 import { AppLoading } from './app-loading';
 import { AppTour } from './app-tour';
@@ -188,10 +188,6 @@ function AccountHome({
   const [currentMealId, setCurrentMealId] = useState<string | null>(null);
   const [history, setHistory] = useState<SavedMeal[]>([]);
   const [showHistory, setShowHistory] = useState(false);
-  const [calendarMonth, setCalendarMonth] = useState(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  });
   const [selectedDate, setSelectedDate] = useState(() => dateKey(new Date()));
   const [status, setStatus] = useState<'idle' | 'ready' | 'loading' | 'result'>(
     initialPhotos.length ? 'ready' : 'idle',
@@ -382,26 +378,6 @@ function AccountHome({
     () => totalMeal(selectedMeals.flatMap((meal) => meal.items)),
     [selectedMeals],
   );
-  const calendarDays = useMemo(() => {
-    const start = new Date(
-      calendarMonth.getFullYear(),
-      calendarMonth.getMonth(),
-      1 - calendarMonth.getDay(),
-    );
-    return Array.from(
-      { length: 42 },
-      (_, index) =>
-        new Date(
-          start.getFullYear(),
-          start.getMonth(),
-          start.getDate() + index,
-        ),
-    );
-  }, [calendarMonth]);
-  const todayKey = dateKey(new Date());
-  const viewingCurrentMonth =
-    calendarMonth.getFullYear() === new Date().getFullYear() &&
-    calendarMonth.getMonth() === new Date().getMonth();
 
   async function pickPhoto(event: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files || []);
@@ -535,7 +511,6 @@ function AccountHome({
     setPhotos([]);
     setReplaceRejectedPhotos(false);
     setSelectedDate(input.date);
-    setCalendarMonth(new Date(createdAt));
     setError('');
     setStatus('result');
   }
@@ -623,7 +598,6 @@ function AccountHome({
   }
   function openHistory() {
     const today = new Date();
-    setCalendarMonth(new Date(today.getFullYear(), today.getMonth(), 1));
     setSelectedDate(dateKey(today));
     setHasUnseenHistory(false);
     try {
@@ -1173,7 +1147,7 @@ function AccountHome({
             if (event.target === event.currentTarget) setShowHistory(false);
           }}
         >
-          <aside className="history-drawer" aria-label="Meal calendar">
+          <aside className="history-drawer" aria-label="Meal history">
             <div className="drawer-header">
               <div>
                 <span className="step-label">
@@ -1181,7 +1155,7 @@ function AccountHome({
                     ? 'Saved to your account'
                     : 'Saved on this device'}
                 </span>
-                <h2>Meal calendar</h2>
+                <h2>Meal history</h2>
               </div>
               <button
                 onClick={() => setShowHistory(false)}
@@ -1193,84 +1167,7 @@ function AccountHome({
             {historySyncError ? (
               <output className="history-sync-note">{historySyncError}</output>
             ) : null}
-            <section
-              className="calendar-card"
-              aria-label={calendarMonth.toLocaleDateString(undefined, {
-                month: 'long',
-                year: 'numeric',
-              })}
-            >
-              <div className="calendar-toolbar">
-                <button
-                  onClick={() =>
-                    setCalendarMonth(
-                      new Date(
-                        calendarMonth.getFullYear(),
-                        calendarMonth.getMonth() - 1,
-                        1,
-                      ),
-                    )
-                  }
-                  aria-label="Previous month"
-                >
-                  <ChevronLeft />
-                </button>
-                <strong>
-                  {calendarMonth.toLocaleDateString(undefined, {
-                    month: 'long',
-                    year: 'numeric',
-                  })}
-                </strong>
-                <button
-                  onClick={() =>
-                    setCalendarMonth(
-                      new Date(
-                        calendarMonth.getFullYear(),
-                        calendarMonth.getMonth() + 1,
-                        1,
-                      ),
-                    )
-                  }
-                  aria-label="Next month"
-                  disabled={viewingCurrentMonth}
-                >
-                  <ChevronRight />
-                </button>
-              </div>
-              <div className="calendar-weekdays" aria-hidden="true">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
-                  (day) => (
-                    <span key={day}>{day}</span>
-                  ),
-                )}
-              </div>
-              <div className="calendar-grid" key={calendarMonth.toISOString()}>
-                {calendarDays.map((day) => {
-                  const key = dateKey(day);
-                  const count = mealsByDate[key]?.length || 0;
-                  const outside = day.getMonth() !== calendarMonth.getMonth();
-                  const future = key > todayKey;
-                  return (
-                    <button
-                      key={key}
-                      className={`${selectedDate === key ? 'selected ' : ''}${outside ? 'outside ' : ''}${future ? 'future' : ''}`}
-                      disabled={future}
-                      onClick={() => {
-                        setSelectedDate(key);
-                        if (outside)
-                          setCalendarMonth(
-                            new Date(day.getFullYear(), day.getMonth(), 1),
-                          );
-                      }}
-                      aria-label={`${day.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}${count ? `, ${count} meal${count > 1 ? 's' : ''}` : ', no meals'}`}
-                    >
-                      <span>{day.getDate()}</span>
-                      {count > 0 && <i>{count}</i>}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
+            <HistoryDayPicker date={selectedDate} onChange={setSelectedDate} />
             <section className="day-summary">
               <div className="day-summary-heading">
                 <div>
