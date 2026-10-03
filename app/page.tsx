@@ -26,6 +26,13 @@ import {
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { AppTour } from './app-tour';
+import { ManualMealDialog } from './manual-meal-dialog';
+import {
+  manualMealThumbnail,
+  manualMealTimestamp,
+  type ManualMealInput,
+  localDate,
+} from '@/lib/manual-meal';
 import { PanelTransition } from './panel-transition';
 import { PortionEditor } from './portion-editor';
 import { MealProcessing } from './meal-processing';
@@ -124,6 +131,12 @@ async function compressImage(
 export default function Home() {
   const { isLoaded, userId } = useAuth();
   const [guestPhotos, setGuestPhotos] = useState<Photo[]>([]);
+  const [showManualMeal, setShowManualMeal] = useState(false);
+  const [manualDraft, setManualDraft] = useState<ManualMealInput>(() => ({
+    description: '',
+    mealType: 'Breakfast',
+    date: localDate(),
+  }));
   if (!isLoaded)
     return (
       <main className="page-shell">
@@ -135,6 +148,10 @@ export default function Home() {
       key={userId || 'guest'}
       initialPhotos={guestPhotos}
       onGuestPhotosChange={setGuestPhotos}
+      showManualMeal={showManualMeal}
+      setShowManualMeal={setShowManualMeal}
+      manualDraft={manualDraft}
+      setManualDraft={setManualDraft}
     />
   );
 }
@@ -142,9 +159,17 @@ export default function Home() {
 function AccountHome({
   initialPhotos,
   onGuestPhotosChange,
+  showManualMeal,
+  setShowManualMeal,
+  manualDraft,
+  setManualDraft,
 }: {
   initialPhotos: Photo[];
   onGuestPhotosChange: (photos: Photo[]) => void;
+  showManualMeal: boolean;
+  setShowManualMeal: (open: boolean) => void;
+  manualDraft: ManualMealInput;
+  setManualDraft: (draft: ManualMealInput) => void;
 }) {
   const { isLoaded, isSignedIn, userId } = useAuth();
   const { openSignUp, openSignIn } = useClerk();
@@ -463,6 +488,49 @@ function AccountHome({
     }
   }
 
+  async function addManualMeal(input: ManualMealInput) {
+    if (!isSignedIn) {
+      openSignIn();
+      throw new Error('Sign in to save your meal, then try again.');
+    }
+    if (!navigator.onLine)
+      throw new Error('Reconnect to estimate and save this meal.');
+    const createdAt = manualMealTimestamp(input.date);
+    const form = new FormData();
+    form.append('description', input.description);
+    const response = await fetch('/api/analyze-meal', {
+      method: 'POST',
+      body: form,
+      headers: { 'X-Platewise-Account': userId || '' },
+    });
+    const body = (await response.json()) as MealAnalysis & { error?: string };
+    if (!response.ok)
+      throw new Error(body.error || 'Could not estimate that meal.');
+    const thumbnail = manualMealThumbnail();
+    const saved: SavedMeal = {
+      ...body,
+      title: `${input.mealType} · ${body.title}`.slice(0, 90),
+      id: crypto.randomUUID(),
+      createdAt,
+      thumbnail,
+    };
+    const nextHistory = [saved, ...history].sort((a, b) =>
+      b.createdAt.localeCompare(a.createdAt),
+    );
+    setCurrentMealId(saved.id);
+    setHistory(nextHistory);
+    setHasUnseenHistory(true);
+    saveHistoryLocal(nextHistory);
+    void syncMeal(saved);
+    setAnalysis(saved);
+    setPreview(thumbnail);
+    setPhotos([]);
+    setReplaceRejectedPhotos(false);
+    setSelectedDate(input.date);
+    setCalendarMonth(new Date(createdAt));
+    setError('');
+    setStatus('result');
+  }
   function updateItem(id: string, itemPatch: Partial<MealItem>) {
     if (!analysis) return;
     const updated = {
@@ -670,6 +738,12 @@ function AccountHome({
                   onClick={() => libraryRef.current?.click()}
                 >
                   <ImagePlus size={19} /> Choose a photo
+                </button>
+                <button
+                  className="secondary-action"
+                  onClick={() => setShowManualMeal(true)}
+                >
+                  <Leaf size={18} /> Add manually
                 </button>
               </div>
             </>
@@ -1037,6 +1111,13 @@ function AccountHome({
         accept={ALLOWED_TYPES.join(',')}
         multiple
         onChange={pickPhoto}
+      />
+      <ManualMealDialog
+        open={showManualMeal}
+        onOpenChange={setShowManualMeal}
+        onSubmit={addManualMeal}
+        draft={manualDraft}
+        onDraftChange={setManualDraft}
       />
       <PanelTransition open={showHistory}>
         <div

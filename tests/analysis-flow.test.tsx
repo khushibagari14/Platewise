@@ -29,6 +29,8 @@ beforeEach(() => {
   );
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
     drawImage: vi.fn(),
+    fillRect: vi.fn(),
+    fillText: vi.fn(),
   } as unknown as CanvasRenderingContext2D);
   vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((cb) =>
     cb(new Blob(['image'], { type: 'image/jpeg' })),
@@ -174,4 +176,45 @@ it('replaces rejected meal photos on the next upload, then allows extra angles a
   );
   fireEvent.click(screen.getByRole('button', { name: 'Analyze meal' }));
   await waitFor(() => expect(submittedCounts).toEqual([1, 2]));
+});
+
+it('logs a typed breakfast for yesterday with no photo and keeps it editable', async () => {
+  let manualDescription = '';
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (url === '/api/analyze-meal') {
+        const form = init!.body as FormData;
+        const description = form.get('description');
+        manualDescription = typeof description === 'string' ? description : '';
+        expect(form.getAll('images')).toHaveLength(0);
+        return Promise.resolve(Response.json(meal));
+      }
+      return Promise.resolve(
+        init?.method === 'POST'
+          ? Response.json({ saved: true })
+          : Response.json({ meals: [] }),
+      );
+    }),
+  );
+  render(<Home />);
+  fireEvent.click(screen.getByRole('button', { name: 'Add manually' }));
+  fireEvent.change(screen.getByLabelText('What did you eat?'), {
+    target: { value: '2 slices of bread and 100 g curd' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Yesterday' }));
+  const chosen = (screen.getByLabelText('Meal date') as HTMLInputElement).value;
+  fireEvent.click(screen.getByRole('button', { name: 'Estimate & save meal' }));
+  await waitFor(() =>
+    expect(screen.getByText('Breakfast · Lunch')).toBeTruthy(),
+  );
+  expect(manualDescription).toContain('100 g curd');
+  const saved = JSON.parse(
+    localStorage.getItem('platewise:recent-meals:analysis_test')!,
+  ) as { createdAt: string }[];
+  const date = new Date(saved[0].createdAt);
+  expect(
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
+  ).toBe(chosen);
+  expect(screen.getByLabelText('Amount of Rice')).toBeTruthy();
 });

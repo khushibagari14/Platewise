@@ -3233,3 +3233,22 @@ b {
   .panel-transition[data-exiting] .drawer-backdrop,
   .panel-transition[data-exiting] .history-drawer { animation: none; }
 }
+.manual-meal-dialog[data-slot='dialog-content'] { width: min(460px, calc(100vw - 32px)); max-width: 460px; max-height: calc(100dvh - 32px); overflow-y: auto; padding: 26px; border-radius: 22px; background: #fffdf7; color: var(--olive); gap: 10px; }
+.manual-meal-dialog [data-slot='dialog-title'] { font-family: var(--font-heading); font-size: 1.7rem; font-weight: 400; }
+.manual-meal-dialog [data-slot='dialog-description'] { color: var(--ink-muted); font-size: .84rem; }
+.manual-meal-dialog fieldset { border: 0; margin: 12px 0 0; padding: 0; min-width: 0; }
+.manual-meal-options { display: grid; grid-template-columns: 1fr 1.2fr; gap: 12px; }
+.manual-meal-dialog label { display: grid; gap: 7px; font-size: .78rem; color: var(--ink-muted); }
+.manual-meal-dialog select, .manual-meal-dialog input, .manual-meal-dialog textarea { width: 100%; min-width: 0; min-height: 44px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: transparent; color: var(--olive); font-size: 16px; font-weight: 400; }
+.manual-meal-dialog textarea { resize: vertical; line-height: 1.6; }
+.manual-meal-dialog input:focus-visible, .manual-meal-dialog select:focus-visible, .manual-meal-dialog textarea:focus-visible { outline: 2px solid var(--olive); outline-offset: 2px; }
+.manual-date-shortcuts { display: flex; gap: 8px; margin: 10px 0 20px; }
+.manual-date-shortcuts button { border: 1px solid var(--line); background: transparent; border-radius: 20px; padding: 6px 12px; font-size: .75rem; color: var(--ink-muted); cursor: pointer; }
+.manual-date-shortcuts button[aria-pressed='true'] { background: var(--olive-soft); color: var(--olive); }
+.manual-hint { font-size: .75rem; line-height: 1.6; color: var(--ink-muted); margin: 10px 0 18px; }
+.manual-error { font-size: .8rem; color: #a04432; margin-bottom: 12px; }
+.manual-meal-dialog .primary-action { width: 100%; }
+.manual-meal-dialog button:disabled { opacity: .5; cursor: default; }
+.manual-meal-dialog .meal-processing { padding: 20px 0 0; }
+.scanner-card .upload-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 400px) { .manual-meal-dialog[data-slot='dialog-content'] { padding: 22px 18px; } .scanner-card .upload-actions button { padding-inline: 8px; font-size: .8rem; } }
