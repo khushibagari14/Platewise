@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
+import { TodaySummary } from './today-summary';
 import { AppLoading } from './app-loading';
 import { AppTour } from './app-tour';
 import { ManualMealDialog } from './manual-meal-dialog';
@@ -1050,6 +1051,7 @@ function AccountHome({
             </div>
           )}
         </section>
+        <TodaySummary meals={history} loading={restoringHistory} />
         {error && (
           <div className="error-message" role="alert">
             <AlertCircle size={19} />

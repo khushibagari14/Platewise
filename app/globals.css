@@ -3332,3 +3332,13 @@ b {
 /* Anchor startup loading to the viewport, including mobile browser resizing. */
 .app-loading { position: fixed; inset: 0; z-index: 100; width: 100%; height: 100vh; height: 100dvh; min-height: 0; margin: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
 .app-loading-content { position: static; flex: 0 0 auto; width: auto; max-width: 100%; margin: 0; }
+.today-summary { max-width: 920px; margin: 18px auto 0; padding: 20px 22px; border: 1px solid var(--line); border-radius: 20px; background: #fffdf7; }
+.today-summary-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.today-summary-heading h2 { margin: 0; color: var(--olive); font-size: 1rem; font-weight: 400; }
+.today-summary-heading > span { font-size: .73rem; color: var(--ink-muted); }
+.today-summary-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; margin: 0; }
+.today-summary-metrics dt { font-size: .72rem; color: var(--ink-muted); margin-bottom: 6px; }
+.today-summary-metrics dd { margin: 0; font-size: 1.45rem; font-weight: 400; color: var(--olive); overflow-wrap: anywhere; }
+.today-summary-metrics dd span { font-size: .8rem; color: var(--ink-muted); }
+.today-summary > p { margin: 16px 0 0; font-size: .75rem; color: var(--ink-muted); }
+@media (max-width: 640px) { .today-summary { padding: 18px; margin-top: 14px; } .today-summary-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 12px; } .today-summary-metrics .today-calories { grid-column: span 2; } .today-summary-metrics dd { font-size: 1.3rem; } }
