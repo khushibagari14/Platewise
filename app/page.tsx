@@ -868,7 +868,7 @@ function AccountHome({
                       type="button"
                       onClick={() => cameraRef.current?.click()}
                     >
-                      <Camera size={18} /> Take another
+                      <Camera size={18} /> Add another photo
                     </button>
                     <button
                       type="button"
@@ -879,7 +879,11 @@ function AccountHome({
                   </div>
                 )}
                 {status !== 'loading' && (
-                  <button className="text-button" onClick={() => removePhoto()}>
+                  <button
+                    type="button"
+                    className="reset-meal-button"
+                    onClick={() => removePhoto()}
+                  >
                     <RotateCcw size={15} /> Start over
                   </button>
                 )}

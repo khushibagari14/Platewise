@@ -3261,3 +3261,8 @@ b {
 .photo-context small { display: block; font-size: .7rem; line-height: 1.5; color: var(--ink-muted); margin-top: 8px; }
 .photo-context[open] > label { animation: screen-arrive 180ms ease-out; }
 @media (prefers-reduced-motion: reduce) { .photo-context[open] > label { animation: none; } }
+.reset-meal-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; margin-top: 16px; padding: 10px 16px; border: 1px solid var(--line); border-radius: 10px; background: #fffdf7; color: var(--olive); font-size: .84rem; font-weight: 400; cursor: pointer; transition: background-color 160ms ease; }
+.reset-meal-button:hover { background: var(--olive-soft); }
+.reset-meal-button:focus-visible { outline: 2px solid var(--olive); outline-offset: 3px; }
+@media (max-width: 640px) { .add-more-actions button { flex-wrap: wrap; text-align: center; line-height: 1.4; } .reset-meal-button { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .reset-meal-button { transition: none; } }
