@@ -1506,7 +1506,7 @@ h1 {
 }
 .saved-meal-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 64px;
+  grid-template-columns: minmax(0, 1fr) 44px;
   gap: 8px;
   align-items: stretch;
   padding: 10px 0;
@@ -1524,35 +1524,6 @@ h1 {
   background: transparent;
   color: var(--olive);
   cursor: pointer;
-}
-.saved-meal-delete {
-  width: 64px;
-  min-height: 64px;
-  padding: 6px 3px;
-  border: 1px solid #ead0c9;
-  border-radius: 13px;
-  color: var(--tomato);
-  background: #fbf0ec;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  cursor: pointer;
-  transition:
-    background 0.18s ease,
-    color 0.18s ease,
-    transform 0.18s ease;
-}
-.saved-meal-delete span {
-  display: block;
-  font-size: 0.62rem;
-  font-weight: 400;
-}
-.saved-meal-delete.confirming {
-  color: white;
-  background: var(--tomato);
-  transform: scale(0.97);
 }
 .saved-meal-open img {
   width: 64px;
@@ -3385,3 +3356,12 @@ b {
 .history-date-row input::-webkit-date-and-time-value { min-width: 0; text-align: center; }
 .history-day-picker button:focus-visible, .history-day-picker input:focus-visible { outline: 2px solid var(--olive); outline-offset: 3px; }
 
+
+.saved-meal-options { width: 44px; height: 44px; align-self: center; display: grid; place-items: center; padding: 0; border: 0; border-radius: 12px; background: transparent; color: var(--ink-muted); cursor: pointer; }
+.saved-meal-options:hover, .saved-meal-options[aria-expanded='true'] { background: var(--olive-soft); color: var(--olive); }
+.saved-meal-options:focus-visible, .saved-meal-removal button:focus-visible { outline: 2px solid var(--olive); outline-offset: 2px; }
+.saved-meal-removal { grid-column: 1 / -1; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 10px 12px; border-radius: 12px; background: var(--paper); font-size: .76rem; color: var(--ink-muted); }
+.saved-meal-removal > span { flex: 1 1 120px; }
+.saved-meal-removal button { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 8px 10px; border: 0; border-radius: 9px; background: transparent; color: var(--olive); font: inherit; cursor: pointer; }
+.saved-meal-removal button:last-child { color: var(--tomato); background: #fbf0ec; }
+.saved-meal-removal { min-width: 0; margin: 0; border: 0; }
