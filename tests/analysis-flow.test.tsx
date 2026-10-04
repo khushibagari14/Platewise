@@ -101,10 +101,16 @@ it('keeps processing feedback visible until the estimate arrives, then shows res
     expect(screen.getByText('Your meal estimate')).toBeTruthy(),
   );
   expect(view.container.querySelector('.meal-processing')).toBeNull();
-  expect(screen.getByRole('button', { name: 'Scan another' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Back to home' })).toBeTruthy();
   expect(screen.queryByText('Today’s intake')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Delete this analysis' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
+  expect(screen.getByText('Your meal estimate')).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Back to home' }));
+  expect(screen.getByText('Today’s intake')).toBeTruthy();
+  expect(localStorage.getItem('platewise:recent-meals:analysis_test')).toContain(meal.title);
+  fireEvent.click(screen.getByLabelText('View recent meals'));
+  fireEvent.click(view.container.querySelector('.saved-meal-open')!);
   expect(screen.getByText('Your meal estimate')).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Delete this analysis' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Yes, delete' }));
@@ -308,4 +314,5 @@ it('opens sign-up for guest analysis and preserves photos and details through au
   expect(analysisRequests).toBe(1);
   expect(authActions.openSignUp).toHaveBeenCalledTimes(1);
 });
+
 

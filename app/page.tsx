@@ -9,6 +9,7 @@ import {
 } from '@clerk/nextjs';
 import {
   AlertCircle,
+  ArrowLeft,
   CalendarDays,
   Camera,
   ChevronRight,
@@ -900,8 +901,11 @@ function AccountHome({
                     {analysis.confidence} confidence
                   </p>
                 </div>
-                <button className="start-over" onClick={() => removePhoto()}>
-                  <Camera size={17} /> Scan another
+                <button className="start-over" type="button" onClick={() => {
+                  removePhoto();
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}>
+                  <ArrowLeft size={17} /> Back to home
                 </button>
               </div>
               <div className="headline-metrics">
