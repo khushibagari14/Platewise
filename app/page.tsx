@@ -41,6 +41,7 @@ import { PanelTransition } from './panel-transition';
 import { PortionEditor } from './portion-editor';
 import { ProteinBreakdown } from './protein-breakdown';
 import { DeleteAnalysis } from './delete-analysis';
+import { ThemeToggle } from './theme-toggle';
 import { MealProcessing } from './meal-processing';
 import { syncErrorMessage } from '@/lib/sync-error';
 import { restoreAccountHistory } from '@/lib/account-history';
@@ -625,7 +626,7 @@ function AccountHome({
           </span>
           <span>platewise</span>
         </button>
-        <div className="header-actions">
+        <div className="header-actions"><ThemeToggle />
           {!isSignedIn && (
             <AppTour
               signedIn={Boolean(isSignedIn)}
@@ -1283,6 +1284,7 @@ function AccountHome({
     </main>
   );
 }
+
 
 
 

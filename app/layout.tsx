@@ -13,13 +13,18 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: `(function(){var t;try{t=localStorage.getItem('platewise:theme')}catch(e){}document.documentElement.dataset.theme=t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'})()` }} /></head>
       <body>
         <ClerkProvider
           appearance={{
             variables: {
-              colorPrimary: '#213a2a',
-              colorBackground: '#fffdf7',
+              colorPrimary: 'var(--primary)',
+              colorBackground: 'var(--paper)',
+              colorForeground: 'var(--foreground)',
+              colorMutedForeground: 'var(--ink-muted)',
+              colorInput: 'var(--paper)',
+              colorInputForeground: 'var(--foreground)',
               borderRadius: '0.875rem',
             },
           }}
@@ -31,3 +36,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+
