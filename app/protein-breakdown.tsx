@@ -11,7 +11,7 @@ export function ProteinBreakdown({ items }: { items: MealItem[] }) {
   return <>
     <button type="button" className="protein-block protein-breakdown-trigger" onClick={() => setOpen(true)} aria-label="View protein breakdown" aria-haspopup="dialog">
       <small>Protein</small>
-      <strong>{Math.round(total)}<span>g</span></strong>
+      <strong>{format(total)}<span>g</span></strong>
       <span className="protein-breakdown-hint">View breakdown <ChevronRight size={14} /></span>
     </button>
     <Dialog open={open} onOpenChange={setOpen}>

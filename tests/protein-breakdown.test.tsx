@@ -16,3 +16,7 @@ it('shows each food contribution and updates the open breakdown after a portion 
  expect(within(dialog).getByText('20 g')).toBeTruthy();
  fireEvent.click(within(dialog).getByRole('button', { name: 'Done' }));
 });
+it('preserves decimal protein on the result card instead of rounding to whole grams', () => {
+ render(<ProteinBreakdown items={[{ ...meal.items[0], protein: 2.5 }]} />);
+ expect(screen.getByRole('button', { name: 'View protein breakdown' }).querySelector('strong')?.textContent).toBe('2.5g');
+});
