@@ -1034,7 +1034,7 @@ function AccountHome({
             </button>
           </div>
         )}
-        {userId && (
+        {userId && historySyncError && (
           <div
             className={`account-sync-banner ${historySyncError ? 'sync-pending' : ''}`}
           >
