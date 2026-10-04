@@ -195,6 +195,10 @@ it('passes optional photo details alongside the image to the model', async () =>
   };
   expect(sent.systemInstruction.parts[0].text).toContain('near the lower end');
   expect(sent.systemInstruction.parts[0].text).toContain('not exact measurements');
+  expect(sent.systemInstruction.parts[0].text).toContain('Estimate portions before calculating any nutrients');
+  expect(sent.systemInstruction.parts[0].text).toContain('lower bound supported by the evidence');
+  expect(sent.systemInstruction.parts[0].text).toContain('do not apply dry legume or raw-food values');
+  expect(sent.systemInstruction.parts[0].text).toContain('not a calibrated size reference');
   expect(sent.contents[0].parts[0].text).toContain(
     'Banana shake with milk, no added sugar',
   );
@@ -222,3 +226,4 @@ it('rejects oversized optional photo details', async () => {
   expect(response.status).toBe(400);
   expect(fetcher).not.toHaveBeenCalled();
 });
+
