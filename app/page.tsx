@@ -38,6 +38,7 @@ import {
 } from '@/lib/manual-meal';
 import { PanelTransition } from './panel-transition';
 import { PortionEditor } from './portion-editor';
+import { ProteinBreakdown } from './protein-breakdown';
 import { MealProcessing } from './meal-processing';
 import { syncErrorMessage } from '@/lib/sync-error';
 import { restoreAccountHistory } from '@/lib/account-history';
@@ -908,20 +909,7 @@ function AccountHome({
                   <strong>{Math.round(totals.calories)}</strong>
                   <span>calories</span>
                 </div>
-                <div className="protein-block">
-                  <small>Protein</small>
-                  <strong>
-                    {Math.round(totals.protein)}
-                    <span>g</span>
-                  </strong>
-                  <div className="protein-line">
-                    <i
-                      style={{
-                        width: Math.min(100, totals.protein / 0.5) + '%',
-                      }}
-                    />
-                  </div>
-                </div>
+                <ProteinBreakdown items={analysis.items} />
               </div>
               <div className="macro-grid">
                 <div>
@@ -1283,4 +1271,5 @@ function AccountHome({
     </main>
   );
 }
+
 
