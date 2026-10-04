@@ -3036,12 +3036,12 @@ b {
 }
 @media (max-width: 640px) {
   .signed-in-header {
-    grid-template-columns: minmax(0, 1fr) 44px 44px;
+    grid-template-columns: minmax(0, 1fr) 88px 44px;
   }
   .signed-in-header .header-actions {
     grid-row: 1;
     grid-column: 2;
-    width: 44px;
+    width: 88px;
     min-height: 44px;
     justify-content: center;
   }
@@ -3452,3 +3452,18 @@ html[data-theme='dark'] .today-summary-metrics .today-calories dt { color: var(-
 html[data-theme='dark'] :is(.add-photo-tile span, .tour-footer .primary-action, .tour-footer > button:last-child) { background: #b6d1ac; color: #162019; }
 html[data-theme='dark'] .confidence { background: #2b382e; color: #b6d1ac; }
 html[data-theme='dark'] .notes { color: var(--ink-muted); }
+/* Account controls need room for both the theme switch and avatar. */
+@media (max-width: 640px) {
+ .signed-in-header { grid-template-columns: minmax(0, 1fr) 88px 44px; gap: 10px; }
+ .signed-in-header .header-actions { width: 88px; gap: 8px; justify-content: flex-end; }
+ .signed-in-header .header-actions > .theme-toggle { flex: 0 0 36px; }
+ .signed-in-header .header-actions > .cl-rootBox { flex: 0 0 44px; width: 44px; min-width: 44px; }
+}
+html[data-theme='dark'] .day-total { background: #2b382e; color: var(--foreground); }
+html[data-theme='dark'] .day-total dl div { background: #344338; }
+html[data-theme='dark'] .day-total :is(small, dt) { opacity: 1; color: #b9c5b8; }
+html[data-theme='dark'] .day-total > div > span { opacity: 1; color: #b9c5b8; }
+html[data-theme='dark'] .day-total :is(strong, dd) { color: #e1eade; }
+html[data-theme='dark'] :is(.history-import-card, .nutrition-profile-form, .profile-form, .height-unit-switch, .calendar-card, .daily-protein-footer) { background: var(--paper); color: var(--foreground); }
+html[data-theme='dark'] :is(.food-item.is-delete-open, .delete-analysis-trigger:hover) { background: #3b2925; }
+
