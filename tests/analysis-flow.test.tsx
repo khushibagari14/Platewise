@@ -103,8 +103,14 @@ it('keeps processing feedback visible until the estimate arrives, then shows res
   expect(view.container.querySelector('.meal-processing')).toBeNull();
   expect(screen.getByRole('button', { name: 'Scan another' })).toBeTruthy();
   expect(screen.queryByText('Today’s intake')).toBeNull();
-  fireEvent.click(screen.getByRole('button', { name: 'Scan another' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Delete this analysis' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
+  expect(screen.getByText('Your meal estimate')).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Delete this analysis' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Yes, delete' }));
   expect(screen.getByText('Today’s intake')).toBeTruthy();
+  expect(screen.queryByText('Your meal estimate')).toBeNull();
+  expect(localStorage.getItem('platewise:recent-meals:analysis_test')).toBe('[]');
 });
 
 it('retains a meal and retry queue when deployment storage is not configured', async () => {
@@ -302,3 +308,4 @@ it('opens sign-up for guest analysis and preserves photos and details through au
   expect(analysisRequests).toBe(1);
   expect(authActions.openSignUp).toHaveBeenCalledTimes(1);
 });
+

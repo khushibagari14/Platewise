@@ -39,6 +39,7 @@ import {
 import { PanelTransition } from './panel-transition';
 import { PortionEditor } from './portion-editor';
 import { ProteinBreakdown } from './protein-breakdown';
+import { DeleteAnalysis } from './delete-analysis';
 import { MealProcessing } from './meal-processing';
 import { syncErrorMessage } from '@/lib/sync-error';
 import { restoreAccountHistory } from '@/lib/account-history';
@@ -1013,6 +1014,13 @@ function AccountHome({
                   </div>
                 )}
               </div>
+              {currentMealId && (
+                <DeleteAnalysis onDelete={() => {
+                  deleteSavedMeal(currentMealId);
+                  removePhoto();
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }} />
+              )}
               {analysis.notes.length > 0 && (
                 <div className="notes">
                   <AlertCircle size={18} />
@@ -1271,5 +1279,6 @@ function AccountHome({
     </main>
   );
 }
+
 
 
