@@ -227,3 +227,19 @@ it('rejects oversized optional photo details', async () => {
   expect(fetcher).not.toHaveBeenCalled();
 });
 
+it('tries a fallback before retrying an overloaded model', async () => {
+ const generated = { title: 'Curd', confidence: 'medium', notes: [], items: [{ name: 'Curd', portion: '100 g', calories: 60, protein: 3.5, carbs: 4, fat: 3, fiber: 0 }] };
+ const fetcher = vi.fn().mockResolvedValueOnce(Response.json({ error: { status: 'UNAVAILABLE' } }, { status: 503 })).mockResolvedValueOnce(Response.json({ candidates: [{ content: { parts: [{ text: JSON.stringify(generated) }] } }] }));
+ vi.stubGlobal('fetch', fetcher);
+ expect((await POST(request())).status).toBe(200);
+ expect(fetcher).toHaveBeenCalledTimes(2);
+ expect(fetcher.mock.calls[0][0]).not.toBe(fetcher.mock.calls[1][0]);
+ expect(JSON.parse(fetcher.mock.calls[0][1].body).generationConfig.thinkingConfig.thinkingLevel).toBe('low');
+});
+it('falls back when response headers arrive but reading the body fails', async () => {
+ const generated = { title: 'Curd', confidence: 'medium', notes: [], items: [{ name: 'Curd', portion: '100 g', calories: 60, protein: 3.5, carbs: 4, fat: 3, fiber: 0 }] };
+ const fetcher = vi.fn().mockResolvedValueOnce({ ok: true, arrayBuffer: () => Promise.reject(new DOMException('Timed out', 'AbortError')) }).mockResolvedValueOnce(Response.json({ candidates: [{ content: { parts: [{ text: JSON.stringify(generated) }] } }] }));
+ vi.stubGlobal('fetch', fetcher);
+ expect((await POST(request())).status).toBe(200);
+ expect(fetcher).toHaveBeenCalledTimes(2);
+});

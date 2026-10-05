@@ -18,49 +18,40 @@ async function generateWithRetry(
   requestBody: string,
   deadline: number,
 ): Promise<Response | null> {
-  for (let attempt = 0; attempt < 2; attempt++) {
-    if (Date.now() >= deadline) return null;
-    const controller = new AbortController();
-    const timeout = setTimeout(
-      () => controller.abort(),
-      Math.min(20_000, deadline - Date.now()),
-    );
-    try {
-      const response = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/' +
-          encodeURIComponent(model) +
-          ':generateContent',
-        {
-          method: 'POST',
-          signal: controller.signal,
-          headers: {
-            'Content-Type': 'application/json',
-            'x-goog-api-key': apiKey,
-          },
-          body: requestBody,
-        },
-      );
-      if (
-        response.ok ||
-        !RETRYABLE_STATUSES.has(response.status) ||
-        attempt === 1
-      )
-        return response;
-      await response.body?.cancel();
-    } catch (error) {
-      if (attempt === 1) {
-        console.warn('Gemini request failed', {
-          model,
-          reason: error instanceof Error ? error.name : 'Unknown error',
-        });
-        return null;
-      }
-    } finally {
-      clearTimeout(timeout);
+  if (Date.now() >= deadline) return null;
+  const controller = new AbortController();
+  const started = Date.now();
+  const timeout = setTimeout(() => controller.abort(), Math.min(18_000, deadline - started));
+  try {
+    const body = JSON.parse(requestBody);
+    if (model.startsWith('gemini-3')) {
+      body.generationConfig.thinkingConfig = { thinkingLevel: 'low' };
     }
-    await pause(800 * 2 ** attempt + Math.random() * 300);
+    const response = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent',
+      { method: 'POST', signal: controller.signal, headers: {
+        'Content-Type': 'application/json', 'x-goog-api-key': apiKey,
+      }, body: JSON.stringify(body) },
+    );
+    // Keep the deadline active until the entire response has arrived, not only its headers.
+    const bytes = await response.arrayBuffer();
+    if (!response.ok) {
+      let providerStatus: string | undefined;
+      try { providerStatus = JSON.parse(new TextDecoder().decode(bytes)).error?.status; } catch {}
+      console.warn('Meal analysis provider failed', {
+        model, status: response.status, providerStatus, durationMs: Date.now() - started,
+      });
+    }
+    return new Response(bytes, { status: response.status, headers: response.headers });
+  } catch (error) {
+    console.warn('Meal analysis provider request failed', {
+      model, reason: error instanceof Error ? error.name : 'Unknown error',
+      durationMs: Date.now() - started,
+    });
+    return null;
+  } finally {
+    clearTimeout(timeout);
   }
-  return null;
 }
 
 function safeNumber(value: unknown): number {
@@ -299,33 +290,29 @@ export async function POST(request: Request) {
       ...new Set([configuredModel, 'gemini-3.5-flash', 'gemini-flash-latest']),
     ];
     let geminiResponse: Response | null = null;
-    for (const model of models) {
-      geminiResponse = await generateWithRetry(
-        model,
-        apiKey,
-        requestBody,
-        deadline,
-      );
-      if (!geminiResponse) {
-        if (Date.now() >= deadline) break;
-        continue;
+    const retryModels: string[] = [];
+    // Try every fallback once before spending time retrying an overloaded model.
+    modelAttempts: for (let round = 0; round < 2; round++) {
+      const candidates = round === 0 ? models : retryModels;
+      if (round === 1 && candidates.length && Date.now() < deadline) await pause(800);
+      for (const model of candidates) {
+        if (Date.now() >= deadline) break modelAttempts;
+        const response = await generateWithRetry(model, apiKey, requestBody, deadline);
+        if (!response) {
+          if (round === 0) retryModels.push(model);
+          continue;
+        }
+        geminiResponse = response;
+        if (response.ok) break modelAttempts;
+        if (!RETRYABLE_STATUSES.has(response.status) && ![404, 501].includes(response.status))
+          break modelAttempts;
+        if (round === 0 && RETRYABLE_STATUSES.has(response.status)) retryModels.push(model);
       }
-      if (geminiResponse.ok) break;
-      console.warn('Gemini returned an unsuccessful response', {
-        model,
-        status: geminiResponse.status,
-      });
-      if (![404, 429, 500, 501, 502, 503, 504].includes(geminiResponse.status))
-        break;
-      await geminiResponse.body?.cancel();
     }
     if (!geminiResponse)
       return Response.json(
-        {
-          error:
-            'Meal analysis is temporarily unavailable. Please try again shortly.',
-        },
-        { status: 503 },
+        { code: 'analysis_timeout', error: 'The analysis service did not respond in time. Your photos are still here — please retry.' },
+        { status: 504 },
       );
     if (!geminiResponse.ok) {
       if ([401, 403].includes(geminiResponse.status))
@@ -348,7 +335,7 @@ export async function POST(request: Request) {
         return Response.json(
           {
             error:
-              'Meal analysis is temporarily unavailable. Please try again shortly.',
+              'The analysis service is busy. Your photos are still here — please retry.',
           },
           { status: 503 },
         );
