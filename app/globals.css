@@ -3467,3 +3467,7 @@ html[data-theme='dark'] .day-total :is(strong, dd) { color: #e1eade; }
 html[data-theme='dark'] :is(.history-import-card, .nutrition-profile-form, .profile-form, .height-unit-switch, .calendar-card, .daily-protein-footer) { background: var(--paper); color: var(--foreground); }
 html[data-theme='dark'] :is(.food-item.is-delete-open, .delete-analysis-trigger:hover) { background: #3b2925; }
 
+/* Keep native scrolling while hiding its visual tracks across all app surfaces. */
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; width: 0; height: 0; }
+[data-slot='scroll-area-scrollbar'] { display: none; }
