@@ -48,6 +48,7 @@ import { restoreAccountHistory } from '@/lib/account-history';
 import { MealAnalysis, MealItem, SavedMeal, totalMeal } from '@/lib/nutrition';
 import { flushMealOperations, queueMealOperation } from '@/lib/meal-sync';
 import { validateMeal } from '@/lib/database-validation';
+import { AnalysisError, requestMealAnalysis } from '@/lib/analyze-client';
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const MAX_PHOTOS = 4;
@@ -421,7 +422,7 @@ function AccountHome({
   }
 
   async function analyzeMeal() {
-    if (!photos.length) return;
+    if (!photos.length || status === 'loading') return;
     if (!isSignedIn) {
       if (isLoaded) openSignUp();
       return;
@@ -436,19 +437,7 @@ function AccountHome({
         form.append('images', photo.blob, `meal-${index + 1}.jpg`),
       );
       if (photoContext.trim()) form.append('photoContext', photoContext.trim());
-      const response = await fetch('/api/analyze-meal', {
-        method: 'POST',
-        body: form,
-        headers: { 'X-Platewise-Account': userId || '' },
-      });
-      const body = (await response.json()) as MealAnalysis & {
-        error?: string;
-        code?: string;
-      };
-      if (!response.ok) {
-        if (body.code === 'food_not_detected') setReplaceRejectedPhotos(true);
-        throw new Error(body.error || 'We could not analyze this meal.');
-      }
+      const body = await requestMealAnalysis(form, userId || '');
       setReplaceRejectedPhotos(false);
       const next: MealAnalysis = body;
       const saved: SavedMeal = {
@@ -466,6 +455,11 @@ function AccountHome({
       setAnalysis(next);
       setStatus('result');
     } catch (reason) {
+      if (
+        reason instanceof AnalysisError &&
+        reason.code === 'food_not_detected'
+      )
+        setReplaceRejectedPhotos(true);
       setError(
         reason instanceof Error
           ? reason.message
@@ -485,14 +479,7 @@ function AccountHome({
     const createdAt = manualMealTimestamp(input.date);
     const form = new FormData();
     form.append('description', input.description);
-    const response = await fetch('/api/analyze-meal', {
-      method: 'POST',
-      body: form,
-      headers: { 'X-Platewise-Account': userId || '' },
-    });
-    const body = (await response.json()) as MealAnalysis & { error?: string };
-    if (!response.ok)
-      throw new Error(body.error || 'Could not estimate that meal.');
+    const body = await requestMealAnalysis(form, userId || '');
     const thumbnail = manualMealThumbnail();
     const saved: SavedMeal = {
       ...body,
@@ -626,7 +613,8 @@ function AccountHome({
           </span>
           <span>platewise</span>
         </button>
-        <div className="header-actions"><ThemeToggle />
+        <div className="header-actions">
+          <ThemeToggle />
           {!isSignedIn && (
             <AppTour
               signedIn={Boolean(isSignedIn)}
@@ -902,10 +890,14 @@ function AccountHome({
                     {analysis.confidence} confidence
                   </p>
                 </div>
-                <button className="start-over" type="button" onClick={() => {
-                  removePhoto();
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}>
+                <button
+                  className="start-over"
+                  type="button"
+                  onClick={() => {
+                    removePhoto();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
                   <ArrowLeft size={17} /> Back to home
                 </button>
               </div>
@@ -1020,11 +1012,13 @@ function AccountHome({
                 )}
               </div>
               {currentMealId && (
-                <DeleteAnalysis onDelete={() => {
-                  deleteSavedMeal(currentMealId);
-                  removePhoto();
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }} />
+                <DeleteAnalysis
+                  onDelete={() => {
+                    deleteSavedMeal(currentMealId);
+                    removePhoto();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                />
               )}
               {analysis.notes.length > 0 && (
                 <div className="notes">
@@ -1284,7 +1278,3 @@ function AccountHome({
     </main>
   );
 }
-
-
-
-

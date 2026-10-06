@@ -12,7 +12,75 @@ const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
 const pause = (milliseconds: number) =>
   new Promise((resolve) => setTimeout(resolve, milliseconds));
 
-async function generateWithRetry(
+async function quotaDetails(response: Response) {
+  const payload = (await response
+    .clone()
+    .json()
+    .catch(() => ({}))) as {
+    error?: {
+      message?: string;
+      details?: {
+        violations?: { quotaId?: string; quotaValue?: string }[];
+        retryDelay?: string;
+      }[];
+    };
+  };
+  const details = payload.error?.details || [];
+  const violations = details.flatMap(
+    (detail: { violations?: { quotaId?: string; quotaValue?: string }[] }) =>
+      detail.violations || [],
+  );
+  const exhausted =
+    /\blimit:\s*0(?:\D|$)/i.test(payload.error?.message || '') ||
+    violations.some(
+      (entry: { quotaId?: string; quotaValue?: string }) =>
+        /PerDay/i.test(entry.quotaId || '') || entry.quotaValue === '0',
+    );
+  const delay = details.find(
+    (detail: { retryDelay?: string }) => detail.retryDelay,
+  )?.retryDelay;
+  const retryAfter = Math.max(
+    1,
+    Math.ceil(
+      Number.parseFloat(delay || '') ||
+        Number(response.headers.get('retry-after')) ||
+        60,
+    ),
+  );
+  return { exhausted, retryAfter };
+}
+
+async function modelAnalysis(
+  response: Response,
+): Promise<{ analysis: MealAnalysis | null; noFood: boolean }> {
+  const payload = (await response.json()) as {
+    candidates?: {
+      finishReason?: string;
+      content?: { parts?: { text?: string; thought?: boolean }[] };
+    }[];
+  };
+  const candidate = payload.candidates?.[0];
+  if (candidate?.finishReason && candidate.finishReason !== 'STOP')
+    throw new Error('Incomplete model response');
+  const text = candidate?.content?.parts
+    ?.filter(
+      (part: { text?: string; thought?: boolean }) =>
+        part.text && !part.thought,
+    )
+    .map((part) => part.text)
+    .join('');
+  const parsed = text ? parseModelJson(text) : null;
+  if (!parsed || typeof parsed !== 'object')
+    throw new Error('Invalid model response');
+  const noFood =
+    Array.isArray((parsed as { items?: unknown[] }).items) &&
+    (parsed as { items: unknown[] }).items.length === 0;
+  const analysis = validateAnalysis(parsed);
+  if (!analysis && !noFood) throw new Error('Invalid meal response');
+  return { analysis, noFood };
+}
+
+async function generateOnce(
   model: string,
   apiKey: string,
   requestBody: string,
@@ -21,31 +89,52 @@ async function generateWithRetry(
   if (Date.now() >= deadline) return null;
   const controller = new AbortController();
   const started = Date.now();
-  const timeout = setTimeout(() => controller.abort(), Math.min(18_000, deadline - started));
+  const timeout = setTimeout(
+    () => controller.abort(),
+    Math.min(18_000, deadline - started),
+  );
   try {
     const body = JSON.parse(requestBody);
     if (model.startsWith('gemini-3')) {
       body.generationConfig.thinkingConfig = { thinkingLevel: 'low' };
     }
     const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent',
-      { method: 'POST', signal: controller.signal, headers: {
-        'Content-Type': 'application/json', 'x-goog-api-key': apiKey,
-      }, body: JSON.stringify(body) },
+      'https://generativelanguage.googleapis.com/v1beta/models/' +
+        encodeURIComponent(model) +
+        ':generateContent',
+      {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey,
+        },
+        body: JSON.stringify(body),
+      },
     );
     // Keep the deadline active until the entire response has arrived, not only its headers.
     const bytes = await response.arrayBuffer();
     if (!response.ok) {
       let providerStatus: string | undefined;
-      try { providerStatus = JSON.parse(new TextDecoder().decode(bytes)).error?.status; } catch {}
+      try {
+        providerStatus = JSON.parse(new TextDecoder().decode(bytes)).error
+          ?.status;
+      } catch {}
       console.warn('Meal analysis provider failed', {
-        model, status: response.status, providerStatus, durationMs: Date.now() - started,
+        model,
+        status: response.status,
+        providerStatus,
+        durationMs: Date.now() - started,
       });
     }
-    return new Response(bytes, { status: response.status, headers: response.headers });
+    return new Response(bytes, {
+      status: response.status,
+      headers: response.headers,
+    });
   } catch (error) {
     console.warn('Meal analysis provider request failed', {
-      model, reason: error instanceof Error ? error.name : 'Unknown error',
+      model,
+      reason: error instanceof Error ? error.name : 'Unknown error',
       durationMs: Date.now() - started,
     });
     return null;
@@ -111,16 +200,14 @@ function validateAnalysis(value: unknown): MealAnalysis | null {
   };
 }
 
-function checkRateLimit(request: Request): boolean {
-  const ip =
-    request.headers.get('cf-connecting-ip') ||
-    request.headers.get('x-forwarded-for')?.split(',')[0] ||
-    'local';
+function checkRateLimit(userId: string): boolean {
   const now = Date.now();
-  const recent = (requests.get(ip) || []).filter((time) => now - time < 60_000);
+  const recent = (requests.get(userId) || []).filter(
+    (time) => now - time < 60_000,
+  );
   if (recent.length >= 6) return false;
   recent.push(now);
-  requests.set(ip, recent);
+  requests.set(userId, recent);
   if (requests.size > 500) requests.clear();
   return true;
 }
@@ -154,15 +241,22 @@ export async function POST(request: Request) {
         { error: 'Account changed. Please retry.' },
         { status: 409 },
       );
-    if (!checkRateLimit(request))
+    if (!checkRateLimit(userId))
       return Response.json(
         {
           error: 'Too many scans at once. Please wait a minute and try again.',
         },
         { status: 429 },
       );
-    const apiKey = process.env.GEMINI_API_KEY?.trim();
-    if (!apiKey)
+    const apiKeys = [
+      ...new Set(
+        [
+          process.env.GEMINI_API_KEY?.trim(),
+          process.env.GEMINI_API_KEY_FALLBACK?.trim(),
+        ].filter((key): key is string => !!key),
+      ),
+    ];
+    if (!apiKeys.length)
       return Response.json(
         {
           error:
@@ -228,9 +322,11 @@ export async function POST(request: Request) {
     );
     const requestBody = JSON.stringify({
       systemInstruction: {
-        parts: [{
-          text: 'List separately identifiable meal components as separate items, for example naan, chole and curd, so their protein contributions can be shown individually. Do not bundle distinct foods into one meal item, count components twice, or invent a precise breakdown of inseparable mixed ingredients. Estimate portions before calculating any nutrients. For each visible food, assess count, visible footprint, thickness or fill depth, and usable scale cues across all photos. A bowl or plate alone is not a calibrated size reference: do not assume a standard full bowl, hidden depth, or a large serving from a close-up. Prefer user-stated weights, volumes and nutrition labels. Otherwise choose a conservative plausible edible amount supported by what is visible; report it in grams or ml in the portion field, optionally alongside the count. For curries, chole and similar mixed dishes, distinguish the visible solids from gravy rather than treating the entire bowl as concentrated protein-rich solids. Use cooked-food composition for cooked portions; do not apply dry legume or raw-food values to hydrated cooked weights. Calculate all nutrients from the same reported amount and realistic recipe composition. If scale or depth is unclear, lower confidence and include a short portion assumption in notes rather than presenting the weight as measured. Estimate protein conservatively. When a reliable nutrition label or explicit ingredient amounts are provided, use those values and the stated portion; do not reduce known values arbitrarily. Otherwise use typical food composition matched to the food and its cooked or raw state. For uncertain portion sizes, recipes or food identities, choose a plausible estimate near the lower end of the realistic protein range, using the lower bound supported by the evidence rather than the midpoint or upper end. Prioritize avoiding protein overestimation when the recipe or protein-rich ingredient amount is uncertain. Do not assume hidden protein powder, extra meat, high-protein milk or other protein-rich ingredients without evidence. Keep the reported portion and all nutrients internally consistent; do not apply a blanket protein discount. Explain material protein assumptions in a short note and state that photo-based values are estimates, not exact measurements. Never claim that the estimate is guaranteed to be at or below the actual protein content.',
-        }],
+        parts: [
+          {
+            text: 'List separately identifiable meal components as separate items, for example naan, chole and curd, so their protein contributions can be shown individually. Do not bundle distinct foods into one meal item, count components twice, or invent a precise breakdown of inseparable mixed ingredients. Estimate portions before calculating any nutrients. For each visible food, assess count, visible footprint, thickness or fill depth, and usable scale cues across all photos. A bowl or plate alone is not a calibrated size reference: do not assume a standard full bowl, hidden depth, or a large serving from a close-up. Prefer user-stated weights, volumes and nutrition labels. Otherwise choose a conservative plausible edible amount supported by what is visible; report it in grams or ml in the portion field, optionally alongside the count. For curries, chole and similar mixed dishes, distinguish the visible solids from gravy rather than treating the entire bowl as concentrated protein-rich solids. Use cooked-food composition for cooked portions; do not apply dry legume or raw-food values to hydrated cooked weights. Calculate all nutrients from the same reported amount and realistic recipe composition. If scale or depth is unclear, lower confidence and include a short portion assumption in notes rather than presenting the weight as measured. Estimate protein conservatively. When a reliable nutrition label or explicit ingredient amounts are provided, use those values and the stated portion; do not reduce known values arbitrarily. Otherwise use typical food composition matched to the food and its cooked or raw state. For uncertain portion sizes, recipes or food identities, choose a plausible estimate near the lower end of the realistic protein range, using the lower bound supported by the evidence rather than the midpoint or upper end. Prioritize avoiding protein overestimation when the recipe or protein-rich ingredient amount is uncertain. Do not assume hidden protein powder, extra meat, high-protein milk or other protein-rich ingredients without evidence. Keep the reported portion and all nutrients internally consistent; do not apply a blanket protein discount. Explain material protein assumptions in a short note and state that photo-based values are estimates, not exact measurements. Never claim that the estimate is guaranteed to be at or below the actual protein content.',
+          },
+        ],
       },
       contents: [
         {
@@ -287,35 +383,107 @@ export async function POST(request: Request) {
     const deadline = Date.now() + 55_000;
     const configuredModel = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
     const models = [
-      ...new Set([configuredModel, 'gemini-3.5-flash', 'gemini-flash-latest']),
+      ...new Set([
+        configuredModel,
+        'gemini-3.5-flash-lite',
+        'gemini-3.5-flash',
+        'gemini-flash-latest',
+      ]),
     ];
     let geminiResponse: Response | null = null;
-    const retryModels: string[] = [];
-    // Try every fallback once before spending time retrying an overloaded model.
-    modelAttempts: for (let round = 0; round < 2; round++) {
-      const candidates = round === 0 ? models : retryModels;
-      if (round === 1 && candidates.length && Date.now() < deadline) await pause(800);
-      for (const model of candidates) {
-        if (Date.now() >= deadline) break modelAttempts;
-        const response = await generateWithRetry(model, apiKey, requestBody, deadline);
-        if (!response) {
-          if (round === 0) retryModels.push(model);
-          continue;
+    let result: { analysis: MealAnalysis | null; noFood: boolean } | null =
+      null;
+    const retryModels: { model: string; readyAt: number }[] = [];
+    let quota: { exhausted: boolean; retryAfter: number } | null = null;
+    // Give independent models a chance before retrying; respect provider cooldowns.
+    keyAttempts: for (const [keyIndex, apiKey] of apiKeys.entries()) {
+      const keyDeadline =
+        Date.now() +
+        Math.floor((deadline - Date.now()) / (apiKeys.length - keyIndex));
+      retryModels.length = 0;
+      modelAttempts: for (let round = 0; round < 2; round++) {
+        const candidates =
+          round === 0
+            ? models.map((model) => ({ model, readyAt: 0 }))
+            : retryModels.sort((a, b) => a.readyAt - b.readyAt);
+        for (const { model, readyAt } of candidates) {
+          if (Date.now() >= keyDeadline) break modelAttempts;
+          if (readyAt > Date.now()) {
+            if (readyAt + 5_000 >= keyDeadline) continue;
+            await pause(readyAt - Date.now());
+          }
+          let response = await generateOnce(
+            model,
+            apiKey,
+            requestBody,
+            keyDeadline,
+          );
+          if (!response) {
+            if (round === 0)
+              retryModels.push({ model, readyAt: Date.now() + 800 });
+            continue;
+          }
+          if (response.ok) {
+            try {
+              result = await modelAnalysis(response);
+              break keyAttempts;
+            } catch {
+              console.warn(
+                'Meal analysis returned incomplete or invalid output',
+                { model },
+              );
+              response = Response.json({}, { status: 502 });
+            }
+          }
+          if (!geminiResponse || ![400, 404, 501].includes(response.status))
+            geminiResponse = response;
+          if (response.status === 429) {
+            const currentQuota = await quotaDetails(response);
+            quota = currentQuota;
+            console.warn('Meal analysis quota limit', {
+              model,
+              ...currentQuota,
+            });
+            if (round === 0 && !currentQuota.exhausted)
+              retryModels.push({
+                model,
+                readyAt: Date.now() + currentQuota.retryAfter * 1000,
+              });
+            continue;
+          }
+          // A model-specific unsupported option must not prevent other models working.
+          if (
+            !RETRYABLE_STATUSES.has(response.status) &&
+            ![400, 404, 501].includes(response.status)
+          )
+            break modelAttempts;
+          if (round === 0 && RETRYABLE_STATUSES.has(response.status))
+            retryModels.push({ model, readyAt: Date.now() + 800 });
         }
-        geminiResponse = response;
-        if (response.ok) break modelAttempts;
-        if (!RETRYABLE_STATUSES.has(response.status) && ![404, 501].includes(response.status))
-          break modelAttempts;
-        if (round === 0 && RETRYABLE_STATUSES.has(response.status)) retryModels.push(model);
       }
     }
+    if (result?.analysis) return Response.json(result.analysis);
+    if (result?.noFood)
+      return Response.json(
+        {
+          code: 'food_not_detected',
+          error: description
+            ? 'We could not identify that meal. Add the food names and approximate amounts.'
+            : 'We could not find food in that photo. Try a clearer picture of the whole meal.',
+        },
+        { status: 422 },
+      );
     if (!geminiResponse)
       return Response.json(
-        { code: 'analysis_timeout', error: 'The analysis service did not respond in time. Your photos are still here — please retry.' },
+        {
+          code: 'analysis_timeout',
+          error:
+            'The analysis service did not respond in time. Your meal details are still here — please retry.',
+        },
         { status: 504 },
       );
-    if (!geminiResponse.ok) {
-      if ([401, 403].includes(geminiResponse.status))
+    {
+      if ([400, 401, 403, 404, 501].includes(geminiResponse.status))
         return Response.json(
           {
             error:
@@ -323,27 +491,34 @@ export async function POST(request: Request) {
           },
           { status: 503 },
         );
-      if (geminiResponse.status === 429)
+      if (geminiResponse.status === 429) {
+        const limit = quota || (await quotaDetails(geminiResponse));
         return Response.json(
           {
-            error:
-              'Meal analysis is busy right now. Please wait a minute and retry.',
+            code: limit.exhausted
+              ? 'analysis_quota_exhausted'
+              : 'analysis_rate_limited',
+            error: limit.exhausted
+              ? 'The analysis service has reached its usage limit. Your meal details are kept. The app owner needs to check the AI service quota.'
+              : `The analysis service is receiving too many requests. Your meal details are kept. Try again in ${limit.retryAfter} seconds.`,
           },
-          { status: 429 },
+          { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } },
         );
+      }
       if (RETRYABLE_STATUSES.has(geminiResponse.status))
         return Response.json(
           {
             error:
-              'The analysis service is busy. Your photos are still here — please retry.',
+              'The analysis service is busy. Your meal details are still here — please retry.',
           },
           { status: 503 },
         );
-      if ([400, 413, 415, 422].includes(geminiResponse.status))
+      if ([413, 415, 422].includes(geminiResponse.status))
         return Response.json(
           {
-            error:
-              'We could not process that photo. Try a clear JPEG, PNG or WebP image of the meal.',
+            error: description
+              ? 'The analysis service could not process the meal description. Your text is kept; please retry.'
+              : 'We could not process that photo. Try a clear JPEG, PNG or WebP image of the meal.',
           },
           { status: 422 },
         );
@@ -355,36 +530,6 @@ export async function POST(request: Request) {
         { status: 503 },
       );
     }
-    const payload = (await geminiResponse.json()) as {
-      candidates?: { content?: { parts?: { text?: string }[] } }[];
-    };
-    const text = payload.candidates?.[0]?.content?.parts?.find(
-      (part) => part.text,
-    )?.text;
-    if (!text)
-      return Response.json(
-        {
-          code: 'food_not_detected',
-
-          error: description
-            ? 'We could not identify that meal. Add the food names and approximate amounts.'
-            : 'We could not find food in that photo. Try a clearer picture of the whole meal.',
-        },
-        { status: 422 },
-      );
-    const parsed = validateAnalysis(parseModelJson(text));
-    if (!parsed?.items.length)
-      return Response.json(
-        {
-          code: 'food_not_detected',
-
-          error: description
-            ? 'We could not identify that meal. Add the food names and approximate amounts.'
-            : 'We could not find food in that photo. Try a clearer picture of the whole meal.',
-        },
-        { status: 422 },
-      );
-    return Response.json(parsed);
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError')
       return Response.json(
@@ -397,5 +542,3 @@ export async function POST(request: Request) {
     );
   }
 }
-
-
