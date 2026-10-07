@@ -180,6 +180,26 @@ function validateAnalysis(value: unknown): MealAnalysis | null {
       carbs: safeNumber(item.carbs),
       fat: safeNumber(item.fat),
       fiber: safeNumber(item.fiber),
+      ...(typeof item.sugar === 'number' &&
+      Number.isFinite(item.sugar) &&
+      item.sugar >= 0
+        ? { sugar: Math.min(safeNumber(item.sugar), safeNumber(item.carbs)) }
+        : {}),
+      ...(typeof item.saturatedFat === 'number' &&
+      Number.isFinite(item.saturatedFat) &&
+      item.saturatedFat >= 0
+        ? {
+            saturatedFat: Math.min(
+              safeNumber(item.saturatedFat),
+              safeNumber(item.fat),
+            ),
+          }
+        : {}),
+      ...(typeof item.sodium === 'number' &&
+      Number.isFinite(item.sodium) &&
+      item.sodium >= 0
+        ? { sodium: safeNumber(item.sodium) }
+        : {}),
     };
   });
   const confidence =
@@ -324,7 +344,7 @@ export async function POST(request: Request) {
       systemInstruction: {
         parts: [
           {
-            text: 'List separately identifiable meal components as separate items, for example naan, chole and curd, so their protein contributions can be shown individually. Do not bundle distinct foods into one meal item, count components twice, or invent a precise breakdown of inseparable mixed ingredients. Estimate portions before calculating any nutrients. For each visible food, assess count, visible footprint, thickness or fill depth, and usable scale cues across all photos. A bowl or plate alone is not a calibrated size reference: do not assume a standard full bowl, hidden depth, or a large serving from a close-up. Prefer user-stated weights, volumes and nutrition labels. Otherwise choose a conservative plausible edible amount supported by what is visible; report it in grams or ml in the portion field, optionally alongside the count. For curries, chole and similar mixed dishes, distinguish the visible solids from gravy rather than treating the entire bowl as concentrated protein-rich solids. Use cooked-food composition for cooked portions; do not apply dry legume or raw-food values to hydrated cooked weights. Calculate all nutrients from the same reported amount and realistic recipe composition. If scale or depth is unclear, lower confidence and include a short portion assumption in notes rather than presenting the weight as measured. Estimate protein conservatively. When a reliable nutrition label or explicit ingredient amounts are provided, use those values and the stated portion; do not reduce known values arbitrarily. Otherwise use typical food composition matched to the food and its cooked or raw state. For uncertain portion sizes, recipes or food identities, choose a plausible estimate near the lower end of the realistic protein range, using the lower bound supported by the evidence rather than the midpoint or upper end. Prioritize avoiding protein overestimation when the recipe or protein-rich ingredient amount is uncertain. Do not assume hidden protein powder, extra meat, high-protein milk or other protein-rich ingredients without evidence. Keep the reported portion and all nutrients internally consistent; do not apply a blanket protein discount. Explain material protein assumptions in a short note and state that photo-based values are estimates, not exact measurements. Never claim that the estimate is guaranteed to be at or below the actual protein content.',
+            text: 'Estimate total sugars (natural plus added) and saturated fat in grams, and sodium in milligrams (not grams of salt). Sugar is part of carbohydrates; saturated fat is part of total fat. Never add these subcomponents to calories again. Prefer nutrition labels and explicit ingredients. If a value cannot reasonably be estimated, return null instead of zero, and note uncertainty from salt, sugar or recipe details when relevant. List separately identifiable meal components as separate items, for example naan, chole and curd, so their protein contributions can be shown individually. Do not bundle distinct foods into one meal item, count components twice, or invent a precise breakdown of inseparable mixed ingredients. For naturally countable foods such as bananas, apples, eggs, rotis, naan and bread slices, include the actual estimated count in the portion field before the weight, for example "2 rotis (80 g)" or "1 banana (100 g)". Nutrients must correspond to that entire listed count, not one piece. Use counts only for distinct edible units; dal, rice, soups, drinks and other bulk foods should use grams or ml, never counts of bowls or servings. Estimate portions before calculating any nutrients. For each visible food, assess count, visible footprint, thickness or fill depth, and usable scale cues across all photos. A bowl or plate alone is not a calibrated size reference: do not assume a standard full bowl, hidden depth, or a large serving from a close-up. Prefer user-stated weights, volumes and nutrition labels. Otherwise choose a conservative plausible edible amount supported by what is visible; report it in grams or ml in the portion field, optionally alongside the count. For curries, chole and similar mixed dishes, distinguish the visible solids from gravy rather than treating the entire bowl as concentrated protein-rich solids. Use cooked-food composition for cooked portions; do not apply dry legume or raw-food values to hydrated cooked weights. Calculate all nutrients from the same reported amount and realistic recipe composition. If scale or depth is unclear, lower confidence and include a short portion assumption in notes rather than presenting the weight as measured. Estimate protein conservatively. When a reliable nutrition label or explicit ingredient amounts are provided, use those values and the stated portion; do not reduce known values arbitrarily. Otherwise use typical food composition matched to the food and its cooked or raw state. For uncertain portion sizes, recipes or food identities, choose a plausible estimate near the lower end of the realistic protein range, using the lower bound supported by the evidence rather than the midpoint or upper end. Prioritize avoiding protein overestimation when the recipe or protein-rich ingredient amount is uncertain. Do not assume hidden protein powder, extra meat, high-protein milk or other protein-rich ingredients without evidence. Keep the reported portion and all nutrients internally consistent; do not apply a blanket protein discount. Explain material protein assumptions in a short note and state that photo-based values are estimates, not exact measurements. Never claim that the estimate is guaranteed to be at or below the actual protein content.',
           },
         ],
       },
@@ -362,6 +382,9 @@ export async function POST(request: Request) {
                   'carbs',
                   'fat',
                   'fiber',
+                  'sugar',
+                  'saturatedFat',
+                  'sodium',
                 ],
                 properties: {
                   name: { type: 'STRING' },
@@ -371,6 +394,9 @@ export async function POST(request: Request) {
                   carbs: { type: 'NUMBER' },
                   fat: { type: 'NUMBER' },
                   fiber: { type: 'NUMBER' },
+                  sugar: { type: 'NUMBER', nullable: true },
+                  saturatedFat: { type: 'NUMBER', nullable: true },
+                  sodium: { type: 'NUMBER', nullable: true },
                 },
               },
             },

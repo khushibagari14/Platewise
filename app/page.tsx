@@ -39,6 +39,7 @@ import {
 } from '@/lib/manual-meal';
 import { PanelTransition } from './panel-transition';
 import { PortionEditor } from './portion-editor';
+import { ExtraNutrients } from './extra-nutrients';
 import { ProteinBreakdown } from './protein-breakdown';
 import { DeleteAnalysis } from './delete-analysis';
 import { ThemeToggle } from './theme-toggle';
@@ -923,6 +924,7 @@ function AccountHome({
                   <strong>{Math.round(totals.fiber)}g</strong>
                 </div>
               </div>
+              <ExtraNutrients totals={totals} />
               <div className="food-list">
                 <div className="section-heading">
                   <div>

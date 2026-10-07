@@ -3471,3 +3471,25 @@ html[data-theme='dark'] :is(.food-item.is-delete-open, .delete-analysis-trigger:
 * { scrollbar-width: none; }
 *::-webkit-scrollbar { display: none; width: 0; height: 0; }
 [data-slot='scroll-area-scrollbar'] { display: none; }
+
+/* Discrete foods use a compact, touch-friendly count control. */
+.portion-editor.count-editor { min-width: 138px; max-width: 150px; }
+.count-field { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 0; padding: 0; }
+.count-field button { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 0; border-radius: 9px; background: transparent; color: var(--olive); cursor: pointer; }
+.count-field button:hover { background: var(--olive-soft); }
+.count-field button:disabled { opacity: .35; cursor: default; }
+.count-field button:focus-visible { outline: 2px solid var(--olive); outline-offset: -3px; }
+.count-field input { width: 100%; text-align: center; padding: 0; -moz-appearance: textfield; }
+.count-field input::-webkit-inner-spin-button, .count-field input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+.extra-nutrients { padding: 18px 0; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
+.extra-nutrients > p { margin: 0 0 12px; display: flex; align-items: center; justify-content: space-between; color: var(--olive); font-size: .88rem; }
+.extra-nutrients > p span { font-size: .7rem; color: var(--ink-muted); }
+.extra-nutrients dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.extra-nutrients dl > div { min-width: 0; padding: 12px; background: var(--olive-soft); border-radius: 12px; }
+.extra-nutrients dt { color: var(--ink-muted); font-size: .72rem; }
+.extra-nutrients dd { margin: 7px 0 0; font-size: 1.25rem; font-weight: 400; color: var(--olive); }
+.extra-nutrients dd span { font-size: .72rem; color: var(--ink-muted); }
+.extra-nutrients dd .nutrient-unknown { font-size: .7rem; }
+.extra-nutrients > small { display: block; color: var(--ink-muted); font-size: .7rem; line-height: 1.5; margin-top: 10px; }
+@media (max-width: 400px) { .extra-nutrients dl { gap: 6px; } .extra-nutrients dl > div { padding: 10px 8px; } .extra-nutrients dt { font-size: .67rem; } }

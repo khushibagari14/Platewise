@@ -483,19 +483,17 @@ it('preserves quota diagnostics if an unavailable fallback returns 404', async (
 });
 
 it('recognizes a zero quota even when Gemini only gives the value in its message', async () => {
-  const fetcher = vi
-    .fn()
-    .mockImplementation(() =>
-      Response.json(
-        {
-          error: {
-            message: 'Quota exceeded, limit: 0, model: example',
-            details: [{ retryDelay: '1s' }],
-          },
+  const fetcher = vi.fn().mockImplementation(() =>
+    Response.json(
+      {
+        error: {
+          message: 'Quota exceeded, limit: 0, model: example',
+          details: [{ retryDelay: '1s' }],
         },
-        { status: 429 },
-      ),
-    );
+      },
+      { status: 429 },
+    ),
+  );
   vi.stubGlobal('fetch', fetcher);
   const response = await POST(request());
   expect(response.status).toBe(429);
@@ -503,4 +501,31 @@ it('recognizes a zero quota even when Gemini only gives the value in its message
     'analysis_quota_exhausted',
   );
   expect(fetcher).toHaveBeenCalledTimes(4);
+});
+
+it('preserves added nutrients and omits unknown sodium instead of returning zero', async () => {
+  const enriched = {
+    ...goodMeal,
+    items: [
+      { ...goodMeal.items[0], sugar: 2.5, saturatedFat: 1.5, sodium: null },
+    ],
+  };
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn()
+      .mockResolvedValue(
+        Response.json({
+          candidates: [
+            { content: { parts: [{ text: JSON.stringify(enriched) }] } },
+          ],
+        }),
+      ),
+  );
+  const response = await POST(request(true));
+  const body = (await response.json()) as {
+    items: { sugar: number; saturatedFat: number; sodium?: number }[];
+  };
+  expect(body.items[0]).toMatchObject({ sugar: 2.5, saturatedFat: 1.5 });
+  expect(body.items[0].sodium).toBeUndefined();
 });

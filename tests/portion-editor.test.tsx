@@ -38,3 +38,52 @@ it('restores the saved amount when reopening history', () => {
     (screen.getByLabelText('Amount of Curd') as HTMLInputElement).value,
   ).toBe('105');
 });
+
+it('edits the count instead of grams for two rotis and restores saved counts', () => {
+  const change = vi.fn();
+  const roti = { ...item, name: 'Roti', portion: '2 rotis (80 g)' };
+  const view = render(<PortionEditor item={roti} onChange={change} />);
+  expect(
+    (screen.getByLabelText('Quantity of Roti') as HTMLInputElement).value,
+  ).toBe('2');
+  expect(screen.queryByLabelText('Amount of Roti')).toBeNull();
+  fireEvent.click(screen.getByLabelText('Increase quantity of Roti'));
+  expect(change).toHaveBeenCalledWith(1.5);
+  view.rerender(
+    <PortionEditor item={{ ...roti, quantity: 1.5 }} onChange={change} />,
+  );
+  expect(
+    (screen.getByLabelText('Quantity of Roti') as HTMLInputElement).value,
+  ).toBe('3');
+  fireEvent.change(screen.getByLabelText('Quantity of Roti'), {
+    target: { value: '4' },
+  });
+  fireEvent.blur(screen.getByLabelText('Quantity of Roti'));
+  expect(change).toHaveBeenCalledWith(2);
+});
+it('shows only a gram amount for dal', () => {
+  render(
+    <PortionEditor
+      item={{ ...item, name: 'Dal', portion: '1 bowl (200 g)' }}
+      onChange={vi.fn()}
+    />,
+  );
+  expect(screen.getByLabelText('Amount of Dal')).toBeTruthy();
+  expect(screen.queryByLabelText('Increase quantity of Dal')).toBeNull();
+  expect(screen.queryByLabelText('Quantity of Dal')).toBeNull();
+});
+
+it('increments a typed count without replacing it with the old saved count', () => {
+  const change = vi.fn();
+  render(
+    <PortionEditor
+      item={{ ...item, name: 'Roti', portion: '2 rotis (80 g)' }}
+      onChange={change}
+    />,
+  );
+  fireEvent.change(screen.getByLabelText('Quantity of Roti'), {
+    target: { value: '4' },
+  });
+  fireEvent.click(screen.getByLabelText('Increase quantity of Roti'));
+  expect(change).toHaveBeenCalledWith(2.5);
+});

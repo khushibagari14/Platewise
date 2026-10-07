@@ -47,6 +47,11 @@ export function validateMeal(value: unknown): SavedMeal | null {
         (item.quantity as number) <= 50 &&
         ['calories', 'protein', 'carbs', 'fat', 'fiber'].every(
           (key) => isNumber(item[key]) && (item[key] as number) <= 100_000,
+        ) &&
+        ['sugar', 'saturatedFat', 'sodium'].every(
+          (key) =>
+            item[key] === undefined ||
+            (isNumber(item[key]) && (item[key] as number) <= 100_000),
         )
       );
     })
