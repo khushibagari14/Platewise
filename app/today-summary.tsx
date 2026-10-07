@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { localDate } from '@/lib/manual-meal';
+import { nutritionDay, nextNutritionDay } from '@/lib/nutrition-day';
 import { totalMeal, type SavedMeal } from '@/lib/nutrition';
 
 export function TodaySummary({
@@ -10,19 +10,14 @@ export function TodaySummary({
   meals: SavedMeal[];
   loading: boolean;
 }) {
-  const [day, setDay] = useState(localDate);
+  const [day, setDay] = useState(nutritionDay);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
     function refresh() {
-      setDay(localDate());
+      setDay(nutritionDay());
       clearTimeout(timer);
       const now = new Date();
-      const midnight = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() + 1,
-      );
-      timer = setTimeout(refresh, midnight.getTime() - now.getTime() + 100);
+      timer = setTimeout(refresh, nextNutritionDay(now).getTime() - now.getTime() + 100);
     }
     refresh();
     document.addEventListener('visibilitychange', refresh);
@@ -32,7 +27,7 @@ export function TodaySummary({
     };
   }, []);
   const todayMeals = meals.filter(
-    (meal) => localDate(new Date(meal.createdAt)) === day,
+    (meal) => nutritionDay(new Date(meal.createdAt)) === day,
   );
   const totals = totalMeal(todayMeals.flatMap((meal) => meal.items));
   const pending = loading && !todayMeals.length;

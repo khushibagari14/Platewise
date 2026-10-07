@@ -54,7 +54,7 @@ it('does not show misleading zero totals while account history loads', () => {
   );
   expect(screen.getByText('Loading your meals…')).toBeTruthy();
 });
-it('switches to the new local day at midnight without reloading', async () => {
+it('keeps intake across midnight and starts a new nutrition day at 3 am without reloading', async () => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date(2026, 9, 3, 23, 59, 59));
   const view = render(
@@ -65,8 +65,22 @@ it('switches to the new local day at midnight without reloading', async () => {
   );
   expect(screen.getByText('1 meal logged')).toBeTruthy();
   await act(() => vi.advanceTimersByTime(1200));
+  expect(screen.getByText('1 meal logged')).toBeTruthy();
+  await act(() => vi.advanceTimersByTime(3 * 60 * 60 * 1000));
   expect(screen.getByText('0 meals logged')).toBeTruthy();
   expect(view.container.querySelector('.today-calories dd')!.textContent).toBe(
     '0',
   );
+});
+
+it('combines last evening and after-midnight meals before the 3 am cutoff', () => {
+ vi.useFakeTimers();
+ vi.setSystemTime(new Date(2026,9,8,2));
+ const view=render(<TodaySummary meals={[
+ {...meal,id:'evening',createdAt:new Date(2026,9,7,20).toISOString()},
+ {...meal,id:'late',createdAt:new Date(2026,9,8,1).toISOString()},
+ {...meal,id:'previous-night',createdAt:new Date(2026,9,7,1).toISOString()},
+ ]} loading={false}/>);
+ expect(screen.getByText('2 meals logged')).toBeTruthy();
+ expect(view.container.querySelector('.today-calories dd')!.textContent).toBe('400');
 });
