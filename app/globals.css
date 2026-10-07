@@ -3509,3 +3509,13 @@ html[data-theme='dark'] .checkout-result-card .billing-kicker { color: var(--inf
 html[data-theme='dark'] .notes { background: var(--olive-soft); border-color: var(--line); color: var(--ink-muted); }
 html[data-theme='dark'] .confidence.low { color: var(--ink-muted); }
 html[data-theme='dark'] .confidence.low::before { background: var(--ink-muted); }
+
+/* A centered, distinct destructive action after the food portions. */
+.delete-analysis-footer { display: flex; justify-content: center; margin: 24px 0 12px; }
+.delete-analysis-footer .delete-analysis-trigger { margin: 0; padding: 12px 20px; min-height: 46px; border: 1px solid #d9aea2; border-radius: 12px; background: #f8e9e3; color: #923c2c; font-size: .84rem; transition: background-color 160ms ease, border-color 160ms ease, opacity 160ms ease; }
+.delete-analysis-footer .delete-analysis-trigger:hover { background: #f1d8cf; border-color: #c78c7b; }
+.delete-analysis-footer .delete-analysis-trigger:disabled { opacity: .55; cursor: default; }
+html[data-theme='dark'] .delete-analysis-footer .delete-analysis-trigger { background: #382823; border-color: #69463b; color: #ee9d87; }
+html[data-theme='dark'] .delete-analysis-footer .delete-analysis-trigger:hover { background: #483029; border-color: #986453; }
+.delete-analysis-dialog[data-ending-style] { animation: protein-dialog-appear 160ms ease-in reverse; }
+@media (prefers-reduced-motion: reduce) { .delete-analysis-footer .delete-analysis-trigger { transition: none; } .delete-analysis-dialog[data-ending-style] { animation: none; } }

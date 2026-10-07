@@ -108,15 +108,26 @@ it('keeps processing feedback visible until the estimate arrives, then shows res
   expect(screen.getByText('Your meal estimate')).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Back to home' }));
   expect(screen.getByText('Today’s intake')).toBeTruthy();
-  expect(localStorage.getItem('platewise:recent-meals:analysis_test')).toContain(meal.title);
+  expect(
+    localStorage.getItem('platewise:recent-meals:analysis_test'),
+  ).toContain(meal.title);
   fireEvent.click(screen.getByLabelText('View recent meals'));
   fireEvent.click(view.container.querySelector('.saved-meal-open')!);
   expect(screen.getByText('Your meal estimate')).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Delete this analysis' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Yes, delete' }));
-  expect(screen.getByText('Today’s intake')).toBeTruthy();
+  expect(
+    (
+      view.container.querySelector(
+        '.delete-analysis-trigger',
+      ) as HTMLButtonElement
+    ).disabled,
+  ).toBe(true);
+  await waitFor(() => expect(screen.getByText('Today’s intake')).toBeTruthy());
   expect(screen.queryByText('Your meal estimate')).toBeNull();
-  expect(localStorage.getItem('platewise:recent-meals:analysis_test')).toBe('[]');
+  expect(localStorage.getItem('platewise:recent-meals:analysis_test')).toBe(
+    '[]',
+  );
 });
 
 it('retains a meal and retry queue when deployment storage is not configured', async () => {
@@ -314,5 +325,3 @@ it('opens sign-up for guest analysis and preserves photos and details through au
   expect(analysisRequests).toBe(1);
   expect(authActions.openSignUp).toHaveBeenCalledTimes(1);
 });
-
-
