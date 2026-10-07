@@ -3493,3 +3493,10 @@ html[data-theme='dark'] :is(.food-item.is-delete-open, .delete-analysis-trigger:
 .extra-nutrients dd .nutrient-unknown { font-size: .7rem; }
 .extra-nutrients > small { display: block; color: var(--ink-muted); font-size: .7rem; line-height: 1.5; margin-top: 10px; }
 @media (max-width: 400px) { .extra-nutrients dl { gap: 6px; } .extra-nutrients dl > div { padding: 10px 8px; } .extra-nutrients dt { font-size: .67rem; } }
+
+/* Keep history removal calm, with space closing as the meal fades. */
+.history-removal-wrapper { display: grid; grid-template-rows: 1fr; opacity: 1; transform: translateY(0); transition: grid-template-rows 260ms ease, opacity 200ms ease, transform 260ms ease; }
+.history-removal-inner { min-height: 0; overflow: hidden; }
+.history-removal-wrapper[data-removing] { grid-template-rows: 0fr; opacity: 0; transform: translateY(-6px); pointer-events: none; }
+.history-remove-dialog[data-slot='dialog-content'] { color: var(--olive); }
+@media (prefers-reduced-motion: reduce) { .history-removal-wrapper { transition: none; } }

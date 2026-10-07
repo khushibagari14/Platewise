@@ -26,6 +26,7 @@ import {
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { HistoryDayPicker } from './history-day-picker';
+import { HistoryMealRow } from './history-meal-row';
 import { TodaySummary } from './today-summary';
 import { AppLoading } from './app-loading';
 import { AppTour } from './app-tour';
@@ -201,9 +202,6 @@ function AccountHome({
   const [error, setError] = useState('');
   const [replaceRejectedPhotos, setReplaceRejectedPhotos] = useState(false);
   const [openDeleteId, setOpenDeleteId] = useState<string | null>(null);
-  const [pendingMealDeleteId, setPendingMealDeleteId] = useState<string | null>(
-    null,
-  );
   const [hasUnseenHistory, setHasUnseenHistory] = useState(false);
   const [cloudHistory, setCloudHistory] = useState(false);
   const [historySyncError, setHistorySyncError] = useState('');
@@ -584,7 +582,6 @@ function AccountHome({
   function deleteSavedMeal(id: string) {
     const next = history.filter((meal) => meal.id !== id);
     setHistory(next);
-    setPendingMealDeleteId(null);
     saveHistoryLocal(next);
     void deleteCloudMeal(id);
   }
@@ -1213,9 +1210,8 @@ function AccountHome({
                   <div className="history-list">
                     {selectedMeals.map((meal) => {
                       const mealTotal = totalMeal(meal.items);
-                      const confirming = pendingMealDeleteId === meal.id;
                       return (
-                        <div className="saved-meal-row" key={meal.id}>
+                        <HistoryMealRow key={meal.id} title={meal.title} onRemove={() => deleteSavedMeal(meal.id)}>
                           <button
                             className="saved-meal-open"
                             onClick={() => loadMeal(meal)}
@@ -1240,23 +1236,7 @@ function AccountHome({
                             </span>
                             <ChevronRight size={18} />
                           </button>
-                          <button
-                            className={`saved-meal-delete ${confirming ? 'confirming' : ''}`}
-                            onClick={() =>
-                              confirming
-                                ? deleteSavedMeal(meal.id)
-                                : setPendingMealDeleteId(meal.id)
-                            }
-                            aria-label={
-                              confirming
-                                ? `Confirm deletion of ${meal.title}`
-                                : `Delete ${meal.title}`
-                            }
-                          >
-                            <Trash2 size={17} />
-                            <span>{confirming ? 'Delete' : 'Remove'}</span>
-                          </button>
-                        </div>
+                        </HistoryMealRow>
                       );
                     })}
                   </div>
