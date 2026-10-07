@@ -109,11 +109,6 @@ function readHistory(userId?: string | null): SavedMeal[] {
   }
 }
 
-function dateKey(value: Date | string) {
-  const date = typeof value === 'string' ? new Date(value) : value;
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-}
-
 async function compressImage(
   file: File,
 ): Promise<{ blob: Blob; preview: string }> {
@@ -224,7 +219,7 @@ function AccountHome({
       refreshing = true;
       const revision = historyRevision.current;
       try {
-        const { meals, imported } = await restoreAccountHistory(userId);
+        const { meals, imported, syncError } = await restoreAccountHistory(userId);
         if (!active || revision !== historyRevision.current) return;
         if (imported)
           setSyncNotice(
@@ -232,7 +227,7 @@ function AccountHome({
               ? 'Your browser meal is now in your account.'
               : `${imported} browser meals are now in your account.`,
           );
-        setCloudHistory(true);
+        setCloudHistory(!syncError);
         setHistory(meals);
         setHasUnseenHistory(
           Boolean(
@@ -240,7 +235,7 @@ function AccountHome({
             meals[0].createdAt > storageValue(`${HISTORY_SEEN_KEY}:${userId}`),
           ),
         );
-        setHistorySyncError('');
+        setHistorySyncError(syncError || '');
         try {
           localStorage.setItem(historyKey(userId), JSON.stringify(meals));
         } catch {
@@ -369,7 +364,7 @@ function AccountHome({
   const mealsByDate = useMemo(
     () =>
       history.reduce<Record<string, SavedMeal[]>>((groups, meal) => {
-        const key = dateKey(meal.createdAt);
+        const key = nutritionDay(new Date(meal.createdAt));
         (groups[key] ||= []).push(meal);
         return groups;
       }, {}),
@@ -1029,7 +1024,7 @@ function AccountHome({
           )}
         </section>
         {status === 'idle' && (
-          <TodaySummary meals={history} loading={restoringHistory} />
+          <TodaySummary meals={history} loading={restoringHistory} error={historySyncError} />
         )}
         {error && (
           <div className="error-message" role="alert">
@@ -1244,8 +1239,8 @@ function AccountHome({
               ) : (
                 <div className="empty-day">
                   <CalendarDays size={25} />
-                  <strong>No meals saved</strong>
-                  <span>Scans from this day will appear here.</span>
+                  <strong>{restoringHistory ? 'Loading your meals…' : historySyncError ? 'History could not be loaded' : 'No meals saved for this day'}</strong>
+                  <span>{historySyncError ? 'Your cached meals are kept. Retry account sync to load your history.' : 'Meals from 3 am to 2:59 am the next morning appear here.'}</span>
                 </div>
               )}
             </section>

@@ -352,3 +352,30 @@ it.each([
     expect(date.value).toBe('2026-10-06');
   },
 );
+
+it('shows after-midnight meals with the same nutrition day in history and intake', async () => {
+  vi.setSystemTime(new Date(2026, 9, 8, 2));
+  const rows = [
+    {
+      ...meal,
+      id: 'evening',
+      title: 'Evening meal',
+      createdAt: new Date(2026, 9, 7, 20).toISOString(),
+    },
+    {
+      ...meal,
+      id: 'late',
+      title: 'Late meal',
+      createdAt: new Date(2026, 9, 8, 1).toISOString(),
+    },
+  ];
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(Response.json({ meals: rows })),
+  );
+  render(<Home />);
+  await waitFor(() => expect(screen.getByText('2 meals logged')).toBeTruthy());
+  fireEvent.click(screen.getByLabelText('View recent meals'));
+  expect(await screen.findByText('Evening meal')).toBeTruthy();
+  expect(screen.getByText('Late meal')).toBeTruthy();
+});

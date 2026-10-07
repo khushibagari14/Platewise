@@ -6,9 +6,11 @@ import { totalMeal, type SavedMeal } from '@/lib/nutrition';
 export function TodaySummary({
   meals,
   loading,
+  error,
 }: {
   meals: SavedMeal[];
   loading: boolean;
+  error?: string;
 }) {
   const [day, setDay] = useState(nutritionDay);
   useEffect(() => {
@@ -17,7 +19,10 @@ export function TodaySummary({
       setDay(nutritionDay());
       clearTimeout(timer);
       const now = new Date();
-      timer = setTimeout(refresh, nextNutritionDay(now).getTime() - now.getTime() + 100);
+      timer = setTimeout(
+        refresh,
+        nextNutritionDay(now).getTime() - now.getTime() + 100,
+      );
     }
     refresh();
     document.addEventListener('visibilitychange', refresh);
@@ -30,7 +35,8 @@ export function TodaySummary({
     (meal) => nutritionDay(new Date(meal.createdAt)) === day,
   );
   const totals = totalMeal(todayMeals.flatMap((meal) => meal.items));
-  const pending = loading && !todayMeals.length;
+  const unavailable = !!error && !todayMeals.length;
+  const pending = (loading || unavailable) && !todayMeals.length;
   return (
     <section
       className="today-summary"
@@ -40,9 +46,11 @@ export function TodaySummary({
       <div className="today-summary-heading">
         <h2>Today’s intake</h2>
         <span>
-          {pending
-            ? 'Loading your meals…'
-            : `${todayMeals.length} ${todayMeals.length === 1 ? 'meal' : 'meals'} logged`}
+          {unavailable
+            ? 'History unavailable'
+            : pending
+              ? 'Loading your meals…'
+              : `${todayMeals.length} ${todayMeals.length === 1 ? 'meal' : 'meals'} logged`}
         </span>
       </div>
       <dl className="today-summary-metrics" aria-live="polite">
@@ -68,6 +76,9 @@ export function TodaySummary({
       </dl>
       {!pending && !todayMeals.length && (
         <p>Add your first meal to start today’s totals.</p>
+      )}
+      {unavailable && (
+        <p>Your saved meals could not be loaded. Retry account sync below.</p>
       )}
     </section>
   );

@@ -74,13 +74,43 @@ it('keeps intake across midnight and starts a new nutrition day at 3 am without 
 });
 
 it('combines last evening and after-midnight meals before the 3 am cutoff', () => {
- vi.useFakeTimers();
- vi.setSystemTime(new Date(2026,9,8,2));
- const view=render(<TodaySummary meals={[
- {...meal,id:'evening',createdAt:new Date(2026,9,7,20).toISOString()},
- {...meal,id:'late',createdAt:new Date(2026,9,8,1).toISOString()},
- {...meal,id:'previous-night',createdAt:new Date(2026,9,7,1).toISOString()},
- ]} loading={false}/>);
- expect(screen.getByText('2 meals logged')).toBeTruthy();
- expect(view.container.querySelector('.today-calories dd')!.textContent).toBe('400');
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date(2026, 9, 8, 2));
+  const view = render(
+    <TodaySummary
+      meals={[
+        {
+          ...meal,
+          id: 'evening',
+          createdAt: new Date(2026, 9, 7, 20).toISOString(),
+        },
+        {
+          ...meal,
+          id: 'late',
+          createdAt: new Date(2026, 9, 8, 1).toISOString(),
+        },
+        {
+          ...meal,
+          id: 'previous-night',
+          createdAt: new Date(2026, 9, 7, 1).toISOString(),
+        },
+      ]}
+      loading={false}
+    />,
+  );
+  expect(screen.getByText('2 meals logged')).toBeTruthy();
+  expect(view.container.querySelector('.today-calories dd')!.textContent).toBe(
+    '400',
+  );
+});
+
+it('shows unavailable totals rather than zero when history failed to load', () => {
+  const view = render(
+    <TodaySummary meals={[]} loading={false} error="Storage unavailable" />,
+  );
+  expect(screen.getByText('History unavailable')).toBeTruthy();
+  expect(view.container.querySelector('.today-calories dd')!.textContent).toBe(
+    '—',
+  );
+  expect(screen.queryByText('0 meals logged')).toBeNull();
 });

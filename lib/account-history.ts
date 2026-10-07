@@ -1,13 +1,17 @@
 import { validateMeal } from '@/lib/database-validation';
-import { flushMealOperations, queueMealOperation } from '@/lib/meal-sync';
+import {
+  flushMealOperations,
+  queueMealOperation,
+  withPendingMeals,
+} from '@/lib/meal-sync';
 import type { SavedMeal } from '@/lib/nutrition';
-import { syncResponseError } from '@/lib/sync-error';
+import { syncErrorMessage, syncResponseError } from '@/lib/sync-error';
 
 export const HISTORY_KEY = 'platewise:recent-meals';
 const CLAIM_KEY = 'platewise:browser-history-owner';
 const pending = new Map<
   string,
-  Promise<{ meals: SavedMeal[]; imported: number }>
+  Promise<{ meals: SavedMeal[]; imported: number; syncError?: string }>
 >();
 export const accountHistoryKey = (userId?: string | null) =>
   userId ? `${HISTORY_KEY}:${userId}` : HISTORY_KEY;
@@ -40,9 +44,12 @@ async function load(userId: string) {
     throw await syncResponseError(response, 'History is unavailable.');
   const body = (await response.json()) as { meals?: unknown };
   if (!Array.isArray(body.meals)) throw new Error('Invalid history response.');
-  return body.meals
-    .map(validateMeal)
-    .filter((meal): meal is SavedMeal => meal !== null);
+  const meals = body.meals.map(validateMeal);
+  if (meals.some((meal) => meal === null))
+    throw new Error(
+      'Some saved meals could not be loaded. Your browser history has been kept; please retry.',
+    );
+  return meals as SavedMeal[];
 }
 
 // Account caches migrate once, so a meal deleted on another device is never
@@ -52,8 +59,16 @@ export function restoreAccountHistory(userId: string) {
   const running = pending.get(userId);
   if (running) return running;
   async function restore() {
-    await flushMealOperations(userId);
+    let syncError: string | undefined;
+    try {
+      await flushMealOperations(userId);
+    } catch (error) {
+      syncError = syncErrorMessage(error);
+    }
     let meals = await load(userId);
+    // One failed upload must not prevent reading all existing cloud history.
+    if (syncError)
+      return { meals: withPendingMeals(userId, meals), imported: 0, syncError };
     const migratedKey = `platewise:account-history-migrated:${userId}`;
     const guestDoneKey = `platewise:legacy-imported:${userId}`;
     let owner = storedValue(CLAIM_KEY);

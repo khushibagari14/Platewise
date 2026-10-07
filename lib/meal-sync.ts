@@ -1,6 +1,7 @@
 import { readQueue, writeQueue } from '@/lib/sync-storage';
 import type { SavedMeal } from '@/lib/nutrition';
 import { syncResponseError } from '@/lib/sync-error';
+import { validateMeal } from '@/lib/database-validation';
 
 type Operation =
   | { type: 'save'; meal: SavedMeal }
@@ -23,6 +24,24 @@ export function queueMealOperation(userId: string, operation: Operation) {
   const operations = read(userId);
   operations.push(operation);
   writeQueue(key(userId), JSON.stringify(operations));
+}
+
+export function withPendingMeals(
+  userId: string,
+  meals: SavedMeal[],
+): SavedMeal[] {
+  const merged = new Map(meals.map((meal) => [meal.id, meal]));
+  for (const operation of read(userId)) {
+    if (operation.type === 'clear') merged.clear();
+    else if (operation.type === 'delete') merged.delete(operation.id);
+    else {
+      const meal = validateMeal(operation.meal);
+      if (meal) merged.set(meal.id, meal);
+    }
+  }
+  return [...merged.values()].sort((a, b) =>
+    b.createdAt.localeCompare(a.createdAt),
+  );
 }
 
 export function flushMealOperations(userId: string): Promise<void> {
