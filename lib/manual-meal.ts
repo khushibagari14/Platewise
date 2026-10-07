@@ -6,13 +6,13 @@ export type ManualMealInput = {
 export function localDate(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
-export function manualMealTimestamp(date: string) {
+export function manualMealTimestamp(date: string, addedAt = new Date()) {
   const [year, month, day] = date.split('-').map(Number);
-  const result = new Date(year, month - 1, day, 12);
+  const result = new Date(year, month - 1, day, addedAt.getHours(), addedAt.getMinutes(), addedAt.getSeconds(), addedAt.getMilliseconds());
   if (
     !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
     localDate(result) !== date ||
-    date > localDate()
+    date > localDate(addedAt)
   )
     throw new Error('Choose today or an earlier date.');
   return result.toISOString();
