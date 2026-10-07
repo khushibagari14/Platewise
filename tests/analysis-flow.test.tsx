@@ -26,6 +26,8 @@ vi.mock('@clerk/nextjs', () => ({
 import Home from '@/app/page';
 import { meal } from './fixtures';
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(2026, 9, 8, 12));
   authState.isLoaded = true;
   authState.isSignedIn = true;
   authState.userId = 'analysis_test';
@@ -51,6 +53,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 it('keeps processing feedback visible until the estimate arrives, then shows results', async () => {
@@ -325,3 +328,27 @@ it('opens sign-up for guest analysis and preserves photos and details through au
   expect(analysisRequests).toBe(1);
   expect(authActions.openSignUp).toHaveBeenCalledTimes(1);
 });
+
+it.each([
+  [0, 49, '2026-10-07'],
+  [2, 59, '2026-10-07'],
+  [3, 0, '2026-10-08'],
+])(
+  'opens the correct default history day at %s:%s',
+  async (hour, minute, expected) => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 9, 8, Number(hour), Number(minute)));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(Response.json({ meals: [] })),
+    );
+    render(<Home />);
+    fireEvent.click(screen.getByLabelText('View recent meals'));
+    const date = (await screen.findByLabelText(
+      'History date',
+    )) as HTMLInputElement;
+    expect(date.value).toBe(expected);
+    fireEvent.change(date, { target: { value: '2026-10-06' } });
+    expect(date.value).toBe('2026-10-06');
+  },
+);

@@ -28,6 +28,7 @@ import Image from 'next/image';
 import { HistoryDayPicker } from './history-day-picker';
 import { HistoryMealRow } from './history-meal-row';
 import { TodaySummary } from './today-summary';
+import { nutritionDay } from '@/lib/nutrition-day';
 import { AppLoading } from './app-loading';
 import { AppTour } from './app-tour';
 import { ManualMealDialog } from './manual-meal-dialog';
@@ -195,7 +196,7 @@ function AccountHome({
   const [currentMealId, setCurrentMealId] = useState<string | null>(null);
   const [history, setHistory] = useState<SavedMeal[]>([]);
   const [showHistory, setShowHistory] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(() => dateKey(new Date()));
+  const [selectedDate, setSelectedDate] = useState(() => nutritionDay());
   const [status, setStatus] = useState<'idle' | 'ready' | 'loading' | 'result'>(
     initialPhotos.length ? 'ready' : 'idle',
   );
@@ -586,8 +587,7 @@ function AccountHome({
     void deleteCloudMeal(id);
   }
   function openHistory() {
-    const today = new Date();
-    setSelectedDate(dateKey(today));
+    setSelectedDate(nutritionDay());
     setHasUnseenHistory(false);
     try {
       localStorage.setItem(
