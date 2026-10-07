@@ -567,6 +567,9 @@ function AccountHome({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   function clearHistory() {
+    if (!window.confirm(
+      "Clear all meal history? This removes every saved meal from your account on all devices. This cannot be undone.",
+    )) return;
     saveHistoryLocal([]);
     try {
       localStorage.removeItem(`${HISTORY_SEEN_KEY}:${userId || 'guest'}`);
