@@ -3437,7 +3437,7 @@ html[data-theme='dark'] :is(.brand-mark, .sign-up-button, .primary-action, .anal
 html[data-theme='dark'] .protein-block { background: #34402e; color: var(--olive); }
 html[data-theme='dark'] :is(.macro-grid > div, .food-item, .saved-meal-row, .history-day-summary, .profile-card, .today-summary) { background-color: var(--paper); }
 html[data-theme='dark'] .today-summary-metrics .today-calories { background: #2b382e; }
-html[data-theme='dark'] :is(.notes, .error-message, .saved-meal-delete, .delete-analysis-actions button:last-child) { background: #3b2925; border-color: #69463b; color: #ee9d87; }
+html[data-theme='dark'] :is(.error-message, .saved-meal-delete, .delete-analysis-actions button:last-child) { background: #3b2925; border-color: #69463b; color: #ee9d87; }
 html[data-theme='dark'] .saved-meal-delete.confirming { background: #ee9d87; color: #241b17; }
 html[data-theme='dark'] :is(.manual-error, .portion-editor > small, .confidence.low) { color: #ee9d87; }
 html[data-theme='dark'] .tour-art { background: linear-gradient(135deg, #2c3a2f, #253028); }
@@ -3500,3 +3500,12 @@ html[data-theme='dark'] :is(.food-item.is-delete-open, .delete-analysis-trigger:
 .history-removal-wrapper[data-removing] { grid-template-rows: 0fr; opacity: 0; transform: translateY(-6px); pointer-events: none; }
 .history-remove-dialog[data-slot='dialog-content'] { color: var(--olive); }
 @media (prefers-reduced-motion: reduce) { .history-removal-wrapper { transition: none; } }
+
+/* Informational accents stay quiet in dark mode; destructive actions retain red. */
+html[data-theme='dark'] { --informational-accent: #c3d8ba; --accent: #2b382e; --accent-foreground: #c3d8ba; }
+html[data-theme='dark'] :is(.eyebrow, .step-label, .trust-row svg, .nutrition-goal-icon, .daily-protein-footer > span small, .profile-back:hover, .profile-heading > span, .subscription-page-heading > span, .account-plan-topline > span, .account-feature-list svg, .billing-kicker, .premium-benefit-icon, .premium-journey-title > span, .premium-plan-copy > span) { color: var(--informational-accent); }
+html[data-theme='dark'] :is(.nutrition-goal-icon, .premium-benefit-icon) { background: var(--olive-soft); }
+html[data-theme='dark'] .checkout-result-card .billing-kicker { color: var(--informational-accent); }
+html[data-theme='dark'] .notes { background: var(--olive-soft); border-color: var(--line); color: var(--ink-muted); }
+html[data-theme='dark'] .confidence.low { color: var(--ink-muted); }
+html[data-theme='dark'] .confidence.low::before { background: var(--ink-muted); }
